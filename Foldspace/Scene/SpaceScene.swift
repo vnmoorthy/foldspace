@@ -355,7 +355,7 @@ final class SpaceScene {
         m.lightingModel = .constant
         m.diffuse.contents = UIColor.black
         m.emission.contents = color
-        m.blendMode = .additive
+        m.blendMode = .add
         m.cullMode = .front
         m.transparency = 0.42
         m.writesToDepthBuffer = false
@@ -372,7 +372,7 @@ final class SpaceScene {
         let m = SCNMaterial()
         m.lightingModel = .constant
         m.diffuse.contents = PlanetMaterials.haloTexture(color: color, size: 256, falloff: falloff)
-        m.blendMode = .additive
+        m.blendMode = .add
         m.isDoubleSided = true
         m.writesToDepthBuffer = false
         m.readsFromDepthBuffer = false
@@ -420,7 +420,7 @@ final class SpaceScene {
         tm.diffuse.contents = UIColor.black
         tm.emission.contents = UIColor(red: 1.0, green: 0.78, blue: 0.45, alpha: 1)
         tm.emission.intensity = 1.6
-        tm.blendMode = .additive
+        tm.blendMode = .add
         torus.firstMaterial = tm
         let ring = SCNNode(geometry: torus)
         ring.eulerAngles = SCNVector3(Float.pi / 2, 0, 0)
@@ -441,7 +441,7 @@ final class SpaceScene {
         im.diffuse.contents = UIColor.black
         im.emission.contents = UIColor(red: 1.0, green: 0.55, blue: 0.18, alpha: 1)
         im.emission.intensity = 1.2
-        im.blendMode = .additive
+        im.blendMode = .add
         im.transparency = 0.55
         im.writesToDepthBuffer = false
         innerTorus.firstMaterial = im
@@ -454,7 +454,7 @@ final class SpaceScene {
         let pm = SCNMaterial()
         pm.lightingModel = .constant
         pm.diffuse.contents = PlanetMaterials.accretionDiskTexture()
-        pm.blendMode = .additive
+        pm.blendMode = .add
         pm.isDoubleSided = true
         pm.writesToDepthBuffer = false
         plane.firstMaterial = pm
@@ -601,7 +601,7 @@ final class SpaceScene {
         let hm = SCNMaterial()
         hm.lightingModel = .constant
         hm.diffuse.contents = PlanetMaterials.haloTexture(color: UIColor(red: 0.24, green: 0.95, blue: 1.0, alpha: 1), size: 128, falloff: 2.8)
-        hm.blendMode = .additive
+        hm.blendMode = .add
         hm.writesToDepthBuffer = false
         hm.readsFromDepthBuffer = false
         halo.firstMaterial = hm
@@ -631,7 +631,7 @@ final class SpaceScene {
         warpSystem.particleColor = UIColor(red: 0.62, green: 0.95, blue: 1.0, alpha: 1)
         warpSystem.particleColorVariation = SCNVector4(0.15, 0.05, 0, 0.25)
         warpSystem.particleImage = PlanetMaterials.haloTexture(color: .white, size: 32, falloff: 1.6)
-        warpSystem.blendMode = .additive
+        warpSystem.blendMode = .add
         warpSystem.isLightingEnabled = false
         warpSystem.isAffectedByGravity = false
         warpSystem.isLocal = true                              // streaks ride with the camera
@@ -659,7 +659,7 @@ final class SpaceScene {
             m.diffuse.contents = UIColor.black
             m.emission.contents = color
             m.emission.intensity = intensity
-            m.blendMode = .additive
+            m.blendMode = .add
             m.writesToDepthBuffer = false
             geo.firstMaterial = m
             let n = SCNNode(geometry: geo)
