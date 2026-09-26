@@ -28,8 +28,8 @@ produces the upper and lower lensed images from the actual ray trajectories.
   `g = sqrt(1 − r_s/r) D`. Approaching material is brighter and bluer.
 - Temperature: `T = 11500 K (r / 3 r_s)^(-3/4)`; the observed color uses `g T`.
   Brightness follows the bolometric `g⁴` factor and `r⁻³` radial profile.
-  A Planck spectrum is integrated over 380–780 nm against analytic CIE observer
-  fits, then converted to linear Rec.709. Blender's AgX view transform with
+  A Planck spectrum is integrated over 380–780 nm against the analytic CIE observer
+  fits of [Wyman et al. (2013)](https://jcgt.org/published/0002/02/01/), then converted to linear Rec.709. Blender's AgX view transform with
   Medium High Contrast maps this radiance to the final sRGB PNGs.
 - Seed-free analytic turbulence follows azimuth with radial shear. The desired
   orbital cycle count is `5 (3 r_s/r)^(3/2)`. Blending the neighboring integer
@@ -98,3 +98,21 @@ transparent and opaque pixels, and the last-to-first frame difference relative t
 ordinary adjacent frame differences. FFprobe alone reports the base HEVC layer
 as `yuv420p` and cannot establish whether Apple HEVC alpha is present. The native
 decode report is included in `manifest.json`.
+
+### Final measured results
+
+The resumed production run finished in **59.403 s**, reusing the completed 2K
+still and 39 valid frames, regenerating the interrupted frame, and creating the
+remaining 321 frames before encoding. The earlier contended run reached its
+first movie frame at 112.6 s. These are separate run measurements, not a claimed
+59-second fresh render of every output. The resumed numeric checks sampled a
+256 px grid using the final geodesic integration table; final image dimensions
+were checked independently. Final maximum first-integral relative error was
+**9.38 × 10⁻¹²**, and phase 0 versus phase 1 was exactly equal.
+
+AVFoundation decoded **360 frames**, **1080 × 1080**, **30 fps**, **12.000 s**.
+Its alpha characteristic was present. The first frame contained **886,976 fully
+transparent pixels**, **221,586 opaque pixels**, and **57,838 intermediate-alpha
+pixels**. The last-to-first mean byte change was **1.294**, compared with an
+ordinary adjacent-frame average of **1.081** and maximum **1.256**; the closing
+step is comparable to the animation's ordinary motion, with no blank endpoint.

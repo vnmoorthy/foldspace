@@ -39,19 +39,19 @@ Each chunk starts at its own cell center and receives a velocity directed away f
 d = length(center - p)
 v = normalize(center - p) * (0.35 / d)
 x(t) = center + v*t
-t(k) = 1.8*k/15, k = 0..15
+t(k) = 4.0*k/15, k = 0..15
 rotation(t) = quaternion(fixed_seeded_axis, angular_speed*t)
 angular_speed = seeded uniform(0.35, 1.6) radians per time unit
 ```
 
-Motion is ballistic: velocity and angular speed stay constant. There is no gravity, atmosphere, drag, easing, or artificial slowdown. The camera is fixed. Silicate-like surface and fresh fracture materials use procedural noise and bump; warm key lighting and cool rim lighting expose the facet shapes.
+Motion is ballistic: velocity and angular speed stay constant. There is no gravity, atmosphere, drag, easing, or artificial slowdown. The camera stays fixed at orthographic scale 9.9515. Its framing is derived from the endpoints of every linear trajectory plus a sphere that encloses each rotating chunk, with a 4% margin, so the full free-flight interval fits inside the frame. Silicate-like surface and fresh fracture materials use procedural noise and bump; warm key lighting and cool rim lighting expose the facet shapes.
 
 Presentation choices and limits:
 
 - This is a kinematic free-flight model after fragmentation, with no rigid-body collision solver or self-gravity. Passing fragments can overlap; the sprite is meant to support the separate 3D shatter. The velocity change per unit mass is proportional to inverse distance; it does not separately model differing masses and total force impulse.
 - Chunk geometry is shrunk to 94% around each cell center to expose seams in the first frame. Edge bevels are 0.005 scene units. These visual adjustments make the fracture visible at 256 px.
 - Distances, times, energy, lighting, and material colors are generic visualization units, not a simulation of a named planet's impact energy or composition.
-- Final rendering uses 48 samples; quick mode uses 16 samples at time 1.15. The quick output is `blender/codex/out/shatter/shatter-preview.png`.
+- Final rendering uses 48 samples; quick mode uses 16 samples at the final time, 4.0. The quick output is `blender/codex/out/shatter/shatter-preview.png`.
 
 ### Reproduce
 
@@ -68,4 +68,22 @@ Intermediate final frames and render logs are retained in `blender/codex/out/war
 
 ### Measured runtime and verification
 
-Pending final render completion.
+Measured script runtimes on this machine while other project renders were active:
+
+| Script / mode | Runtime | Output |
+|---|---:|---|
+| Warp quick | 1.08 s | 256 × 256 RGBA preview |
+| Warp final | 422.94 s (7.05 min) | 4096 × 512 RGBA, 1,136,631 bytes |
+| Shatter quick | 3.00 s | 256 × 256 RGBA preview of the revised dispersed end state |
+| Shatter final | 17.88 s | 1024 × 1024 RGBA, 658,205 bytes |
+
+These times exclude Blender startup; full process wall times are slightly longer. Both final runs remain below ten minutes. Voronoi geometry construction itself took 0.64 s in the quick run. The final debris render ran after the concurrent heavy render jobs were paused; the large runtime difference reflects available resources as well as the wider framing.
+
+Verification completed for both delivered final atlases:
+
+- Opened and visually inspected both 256 px previews, full-size representative frames, the final debris atlas, and a 4 × 2 contact sheet of the final warp sequence (`blender/codex/out/warp/warp-contact.png`).
+- Confirmed exact output dimensions and RGBA mode. All 24 atlas tiles are pixel-identical to their corresponding render PNGs, including color and alpha; row order is correct.
+- Confirmed every tile has a fully transparent outer border, so no geometry is cut at the frame boundary. Alpha includes both zero and 255 in every frame.
+- Confirmed warp frames 0 and 7 are pixel-identical.
+- Checked the implemented analytic York derivative against a centered finite difference of the original top-hat expression at six radii: error below 1e-8. Front/rear signs and exact zero-envelope flatness also passed.
+- Confirmed script syntax and the completed Blender logs. No iOS/Swift source, project configuration, or other agents' files were changed by this sprite work.

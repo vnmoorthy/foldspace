@@ -75,6 +75,19 @@ def png(path, pixels):
         tags+=chunk(b'sRGB',b'\0')+chunk(b'gAMA',struct.pack('>I',45455))
     path.write_bytes(b'\x89PNG\r\n\x1a\n'+tags+chunk(b'IDAT',zlib.compress(raw,6))+chunk(b'IEND',b''))
 
+def read_own_png(path):
+    """Read only this script's unfiltered RGB PNGs for contact sheet assembly."""
+    data=path.read_bytes();offset=8;compressed=b''
+    while offset<len(data):
+        size=struct.unpack('>I',data[offset:offset+4])[0]
+        tag=data[offset+4:offset+8];payload=data[offset+8:offset+8+size]
+        if tag==b'IHDR':w,h=struct.unpack('>II',payload[:8])
+        if tag==b'IDAT':compressed+=payload
+        offset+=size+12
+    rows=np.frombuffer(zlib.decompress(compressed),np.uint8).reshape(h,w*3+1)
+    assert np.all(rows[:,0]==0)
+    return rows[:,1:].reshape(h,w,3).astype(np.float32)/255
+
 def hashed(ix,iy,iz,seed):
     with np.errstate(over='ignore'):
         h=(ix.astype(np.uint32)*np.uint32(374761393) ^ iy.astype(np.uint32)*np.uint32(668265263)
@@ -173,13 +186,26 @@ def land_mask(w,h,n):
     return mask[rows,cols]
 
 def clouds(x,y,z,lat,seed):
+    # Rotate the sample domain locally around two spherical storm centers.
+    # Rodrigues rotation gives coherent curved cloud banks with no UV seam.
+    for longitude,latitude in [(-52,37),(82,-39)]:
+        lo,la=np.deg2rad([longitude,latitude])
+        axis=np.array([np.cos(la)*np.cos(lo),np.cos(la)*np.sin(lo),np.sin(la)],dtype=np.float32)
+        dot=x*axis[0]+y*axis[1]+z*axis[2]
+        angle=1.55*np.exp(-(1-dot)/.022)
+        co=np.cos(angle);si=np.sin(angle);rest=dot*(1-co)
+        x,y,z=(x*co+(axis[1]*z-axis[2]*y)*si+axis[0]*rest,
+               y*co+(axis[2]*x-axis[0]*z)*si+axis[1]*rest,
+               z*co+(axis[0]*y-axis[1]*x)*si+axis[2]*rest)
     swirl=field(x,y,z,3,seed,3)
     # Longitude-dependent shearing remains continuous on the sphere.
-    angle=swirl*.65+np.sin(lat*5)*.9
+    angle=swirl*.22+np.sin(lat*5)*.24
     xx=x*np.cos(angle)-y*np.sin(angle);yy=x*np.sin(angle)+y*np.cos(angle)
-    c=field(xx*1.0,yy*1.0,z*2,12,seed+70,4)
-    c+=.09*np.cos(lat*8)
-    return smooth(.05,.36,c)*.82
+    # A fixed orthonormal rotation prevents lattice planes from aligning with
+    # latitude and reading as horizontal scan lines near the equator.
+    c=field(.36*xx+.48*yy-.8*z,-.8*xx+.6*yy,.48*xx+.64*yy+.6*z,6.5,seed+70,3)
+    grain=field(.36*xx+.48*yy-.8*z,-.8*xx+.6*yy,.48*xx+.64*yy+.6*z,45,seed+95,3)
+    return smooth(.01,.30,c+grain*.18)*(.55+.4*smooth(-.30,.30,grain))
 
 def gas(body,lon,lat,x,y,z,n,detail,seed):
     name,kind,temp,hexcol=body
@@ -339,15 +365,22 @@ def preview(image,em,name,size=256):
     center=.15 if name=='earth' else .35
     lon=np.arctan2(xx,zz)+center;lat=np.arcsin(np.clip(yy,-1,1))
     h,w,_=image.shape
-    col=((lon+PI)/(2*PI)*(w-1)).astype(int)%w
-    row=np.clip(((PI/2-lat)/PI*(h-1)).astype(int),0,h-1)
-    tex=image[row,col]
+    u=((lon+PI)/(2*PI)*(w-1))%w
+    v=np.clip(((PI/2-lat)/PI*(h-1)),0,h-1)
+    col=np.floor(u).astype(int);row=np.floor(v).astype(int)
+    tx=(u-col)[...,None];ty=(v-row)[...,None]
+    def sample(a):
+        r1=np.minimum(row+1,h-1);c1=(col+1)%w
+        top=a[row,col]*(1-tx)+a[row,c1]*tx
+        bottom=a[r1,col]*(1-tx)+a[r1,c1]*tx
+        return top*(1-ty)+bottom*ty
+    tex=sample(image)
     sunlight=np.maximum(0,xx*-.40+yy*.25+zz*.88)
     lighting=np.maximum(0,sunlight)*.99+.002
     rgb=np.clip(tex**2.2*lighting[...,None],0,1)**(1/2.2)
     if em is not None:
         mask=(1-smooth(0,.15,sunlight)) if name=='earth' else np.ones_like(sunlight)
-        rgb=np.clip(rgb+em[row,col]*mask[...,None],0,1)
+        rgb=np.clip(rgb+sample(em)*mask[...,None],0,1)
     if name=='sirius-b':rgb=tex
     if name in ('earth','trappist-1e','trappist-1f'):
         rim=(1-zz)**4*sunlight*.35
@@ -375,19 +408,23 @@ def main():
         if em is not None:
             p=target/f'planet-{name}-emissive.png';png(p,em);extras.append(p.name)
         globe=preview(albedo,em,name)
-        png(OUT/f'{name}-sphere.png',globe);previews.append(globe)
+        preview_dir=OUT if args.final else OUT/'quick'
+        png(preview_dir/f'{name}-sphere.png',globe);previews.append(globe)
         info={'id':name,'class':body[1],'temperatureK':body[2],'seed':seed,'albedo':str(path.relative_to(ROOT)),
               'size':[w,h],'extra_maps':extras,'seconds':round(time.perf_counter()-t,3),
               'seam_max_difference':float(np.max(np.abs(albedo[:,0]-albedo[:,-1]))),
               'pole_longitude_range':float(max(np.ptp(albedo[0],axis=0).max(),np.ptp(albedo[-1],axis=0).max()))}
         reports.append(info);print(json.dumps(info),flush=True)
-    cols=7;rows=math.ceil(len(previews)/cols)
+    if args.final and args.only:
+        previews=[read_own_png(OUT/f'{b[0]}-sphere.png') for b in BODIES if (OUT/f'{b[0]}-sphere.png').exists()]
+    cols=min(7,len(previews));rows=math.ceil(len(previews)/cols)
     sheet=np.zeros((rows*272,cols*256,3),np.float32)+np.array([.014,.022,.035])
     for i,globe in enumerate(previews):
         yy,xx=divmod(i,cols);sheet[yy*272:yy*272+256,xx*256:xx*256+256]=globe
     png(OUT/('final-contact-sheet.png' if args.final else 'quick-contact-sheet.png'),sheet)
     summary={'mode':'final' if args.final else 'quick','total_seconds':round(time.perf_counter()-start,3),'bodies':reports}
-    (OUT/('final-report.json' if args.final else 'quick-report.json')).write_text(json.dumps(summary,indent=2))
+    report='final-refinement-report.json' if args.final and args.only else ('final-report.json' if args.final else 'quick-report.json')
+    (OUT/report).write_text(json.dumps(summary,indent=2))
     print(f'Done: {len(reports)} bodies in {summary["total_seconds"]:.2f}s',flush=True)
 
 if __name__=='__main__':main()

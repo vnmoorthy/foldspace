@@ -98,6 +98,9 @@ def emission_material(image, limb=False):
 def render_plane(rgba, path, quick=False, rgb=False):
     """Bake an emission plane through Cycles and AgX, preserving transparency."""
     scene = reset(quick)
+    # There is no indirect-light noise on these deterministic emissive planes.
+    # OIDN blurs stellar/granule detail and allocates a large neural feature map.
+    scene.cycles.use_denoising = False
     h, w = rgba.shape[:2]
     scene.render.resolution_x = w
     scene.render.resolution_y = h

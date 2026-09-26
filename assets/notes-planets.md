@@ -68,10 +68,49 @@ These assets cannot themselves produce a soft terminator, a Rayleigh rim, dynami
 - Lava fissures are already limited to the fixed day hemisphere. Use their emissive maps on that orientation, including while the viewer sees its lit face.
 - Saturn needs actual rings and runtime ring shadows. Sirius B requires an emissive stellar material with limb darkening rather than a dark night hemisphere.
 
-No normal maps are shipped: random directional bump shading would incorrectly bake a sun direction, and the brief makes normal companions optional. Fine albedo/crater structure remains visible under app lighting.
+No normal maps are shipped; the brief makes them optional. Fine albedo/crater structure remains visible under app lighting. Additional geometric relief would require a separate normal or displacement map.
 
 ## Verification and timing
 
 The initial full quick set generated all 26 bodies in **39.67 s of script time** under concurrent rendering load. Blender startup is additional. The sandboxed Blender process crashes in Metal device detection before Python starts; an approved unsandboxed Blender invocation is required on this host. No installation or preference changes were needed.
 
 The quick contact sheet was visually inspected for complete sphere coverage, recognizable Earth geography, band direction, Great Red Spot position, subdued gas-giant color, and the white-dwarf exception. Final generation timings and final validation are recorded in `blender/codex/out/planets/final-report.json` and the completion addendum below.
+
+## Completion addendum
+
+Final generation completed through Blender 5.2.1. The full set took **62.713 s** of script time; the final three-body cloud refinement took **16.254 s**. The maximum time for any individual body was **5.955 s**. Blender startup is excluded. The final maps contain 33 PNGs totaling **43,439,020 bytes** (about 41.4 MiB).
+
+All 33 files passed PNG signature, chunk CRC, decompression, 2048×1024 dimensions, RGB/no-alpha, sRGB tagging for color maps, exact first/last-column equality, and constant pole-row checks. The complete result with SHA-256 hashes is in `blender/codex/out/planets/validation.json`. The final contact sheet and Earth, Jupiter, and lava sphere closeups were visually inspected.
+
+Cloud refinement removed strong latitude anisotropy and nearest-neighbor preview sampling. Clouds now use locally rotated spherical domains for two illustrative cyclones, a rotated lattice basis, and fine-scale density variation. The final sheet reflects these refined maps.
+
+| Body ID | Final map generation, seconds |
+|---|---:|
+| mercury | 1.432 |
+| venus | 1.517 |
+| earth | 5.955 |
+| mars | 1.500 |
+| jupiter | 1.509 |
+| saturn | 1.050 |
+| uranus | 1.100 |
+| neptune | 1.269 |
+| proxima-b | 1.160 |
+| proxima-d | 1.412 |
+| barnard-b | 1.796 |
+| barnard-c | 2.459 |
+| barnard-d | 2.561 |
+| barnard-e | 1.294 |
+| wolf-359-b | 0.877 |
+| sirius-b | 0.986 |
+| eps-eri-b | 1.998 |
+| tau-ceti-e | 3.706 |
+| tau-ceti-f | 4.467 |
+| trappist-1b | 5.202 |
+| trappist-1c | 4.094 |
+| trappist-1d | 2.849 |
+| trappist-1e | 4.784 |
+| trappist-1f | 5.319 |
+| trappist-1g | 2.957 |
+| trappist-1h | 3.787 |
+
+Each per-body time includes its optional companion maps and inspection globe. The exact per-invocation timing records and seeds are in `final-report.json` and `final-refinement-report.json`. No Blender jobs remain running for this deliverable.

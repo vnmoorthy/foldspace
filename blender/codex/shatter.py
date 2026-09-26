@@ -9,6 +9,7 @@ p=argparse.ArgumentParser(); p.add_argument('--quick',action='store_true'); p.ad
 args=p.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else [])
 QUICK=args.quick and not args.final
 START=time.perf_counter(); SEED=6947; rng=random.Random(SEED)
+FINAL_TIME=4.0
 OUT=os.path.join(ROOT,'blender/codex/out/shatter'); os.makedirs(OUT,exist_ok=True)
 os.makedirs(os.path.join(ROOT,'assets/sprites'),exist_ok=True)
 
@@ -107,7 +108,18 @@ for index,seed in enumerate(seeds):
     spin_axis=Vector((rng.uniform(-1,1),rng.uniform(-1,1),rng.uniform(-1,1))).normalized()
     omega=rng.uniform(.35,1.6)
     ob.rotation_mode='QUATERNION'; chunks.append((ob,center,velocity,spin_axis,omega))
-print(f'Voronoi cells generated: {len(chunks)} in {time.perf_counter()-START:.2f}s',flush=True)
+# Fit one fixed orthographic camera to all linear trajectories. A sphere around
+# each chunk bounds every orientation, so intermediate spins cannot clip either.
+right=cam.rotation_euler.to_quaternion() @ Vector((1,0,0))
+up=cam.rotation_euler.to_quaternion() @ Vector((0,1,0))
+max_screen=0.0
+for ob,center,velocity,axis,omega in chunks:
+    bound=max(v.co.length for v in ob.data.vertices)+.005
+    for time_bound in (0.0,FINAL_TIME):
+        pos=center+velocity*time_bound
+        max_screen=max(max_screen,abs(pos.dot(right))+bound,abs(pos.dot(up))+bound)
+cam.data.ortho_scale=2*max_screen*1.04
+print(f'Voronoi cells generated: {len(chunks)} in {time.perf_counter()-START:.2f}s; fixed camera scale={cam.data.ortho_scale:.4f}',flush=True)
 
 def pose(t):
     for ob,start,velocity,axis,omega in chunks:
@@ -125,11 +137,11 @@ def assemble(paths,target):
     img.pixels.foreach_set(atlas_array.ravel()); img.filepath_raw=target; img.file_format='PNG'; img.save()
 
 if QUICK:
-    pose(1.15); scene.render.filepath=os.path.join(OUT,'shatter-preview.png'); bpy.ops.render.render(write_still=True)
+    pose(FINAL_TIME); scene.render.filepath=os.path.join(OUT,'shatter-preview.png'); bpy.ops.render.render(write_still=True)
 else:
     paths=[]
     for frame in range(16):
-        pose(1.8*frame/15)
+        pose(FINAL_TIME*frame/15)
         path=os.path.join(OUT,f'shatter-{frame:02d}.png'); paths.append(path)
         scene.render.filepath=path; bpy.ops.render.render(write_still=True)
     assemble(paths,os.path.join(ROOT,'assets/sprites/shatter-debris-4x4.png'))

@@ -1,0 +1,631 @@
+{
+  "status": "pass",
+  "required_planet_count": 26,
+  "required_png_count": 34,
+  "pngs": [
+    {
+      "path": "textures/planet-mercury.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 1790949,
+      "sha256": "13761b236db44e9cf7f8a043bd3bf61a38013a03dbf7ba0ec8b01abe1276ff27"
+    },
+    {
+      "path": "textures/planet-venus.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 515018,
+      "sha256": "5a47cdff2f3e5dca31e0a38adfb86692f7819403922c05e693b0ae3781ed3c9e"
+    },
+    {
+      "path": "textures/planet-earth.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 2321028,
+      "sha256": "649ac583b938ff5e3c355344b85a6db204c98ee3147220ed1b4456fd2e070a79"
+    },
+    {
+      "path": "textures/planet-mars.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 2118048,
+      "sha256": "a7f2e669b11e202c042310658583e106bda123781e2f244b78855a6570f1c505"
+    },
+    {
+      "path": "textures/planet-jupiter.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 1278807,
+      "sha256": "47e9b1b05672bca4b4215f623114833b69198b32217c96471e0b6e31d80e9a52"
+    },
+    {
+      "path": "textures/planet-saturn.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 692205,
+      "sha256": "28b567b78af26453ca16b700ea6592972952ba01e4386a83a10e2ac171862b27"
+    },
+    {
+      "path": "textures/planet-uranus.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 628086,
+      "sha256": "6547a82e5c3f6ac841f04e7f51ef92dffcd1ae3831283353e7bc4e13ee8e5e69"
+    },
+    {
+      "path": "textures/planet-neptune.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 587685,
+      "sha256": "83c367481bae3ff0ab91e2a2077168679881064cc78d0742ef06de66ef9e4f42"
+    },
+    {
+      "path": "textures/planet-proxima-b.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 2213537,
+      "sha256": "d2bb13d8ed16d3899c8a4d0b599c0f32a28eba6e1c411379f49828bd81446f4a"
+    },
+    {
+      "path": "textures/planet-proxima-d.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 1761488,
+      "sha256": "6f15a30e052fa5527a53cfe33d6f8608e6982cfa64e546f78e2cd5ae6dcff9a4"
+    },
+    {
+      "path": "textures/planet-barnard-b.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 1803212,
+      "sha256": "080538c71204a3861da047ac00ff8c4c29cd4ed043a39bd47160cc0411adde99"
+    },
+    {
+      "path": "textures/planet-barnard-c.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 1751423,
+      "sha256": "0f7f7c7d8071625179d48910072d087248bac3621501a23edae309f124bb5421"
+    },
+    {
+      "path": "textures/planet-barnard-d.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 1601031,
+      "sha256": "0a4062f46c9a4d1a83fcb50d41aa6f3fe5bdac25460f6724f3fd35d44b122f56"
+    },
+    {
+      "path": "textures/planet-barnard-e.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 1724754,
+      "sha256": "8e82b95f91414459c8b9ba29174d7cf161cdd96b9036a71ce87dc7bb7309fcd4"
+    },
+    {
+      "path": "textures/planet-wolf-359-b.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 619290,
+      "sha256": "f0e72aee2490923db55939419454cf0258f709cfa35702882b7bf19dbec01139"
+    },
+    {
+      "path": "textures/planet-sirius-b.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 313143,
+      "sha256": "5be8a4790d28587174606f5bd7257092e298b93a7e1dadeedca431a36711454a"
+    },
+    {
+      "path": "textures/planet-eps-eri-b.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 1306216,
+      "sha256": "9d0db53c53653261be457067d278fcce6d4e4f7b248389f8b682e36bcd65f7e3"
+    },
+    {
+      "path": "textures/planet-tau-ceti-e.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 1926647,
+      "sha256": "4779ca315e026ef248c481bf5d810a7459fa7bf307255a19772f8f5dde3d8204"
+    },
+    {
+      "path": "textures/planet-tau-ceti-f.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 1649378,
+      "sha256": "1dbe267cc469fbfcffa0fd20166e74612f5c7cea75241fc69fc27d193ad54716"
+    },
+    {
+      "path": "textures/planet-trappist-1b.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 1592716,
+      "sha256": "f10b0299fdb4b64b2a77332b233a7990e6b35c34171b39761d04a8970c11e192"
+    },
+    {
+      "path": "textures/planet-trappist-1c.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 1849819,
+      "sha256": "4c84b794e20f7398335f5de26bf0b471aa322581a7af8a8b5fcb55d7dcd679e0"
+    },
+    {
+      "path": "textures/planet-trappist-1d.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 1968289,
+      "sha256": "c14807f28027408ab2c67bf16f7f9fd12931a3d7faddce8c51c3e70a99c3e144"
+    },
+    {
+      "path": "textures/planet-trappist-1e.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 2227598,
+      "sha256": "a07969fb52d24e8fc2e5ca85d4c98d558e60655ea75be8a6c9d986cd492fd676"
+    },
+    {
+      "path": "textures/planet-trappist-1f.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 1996074,
+      "sha256": "785e40f2b8b8873d9e57138d4861a98c732b7bfaaa59dd00f90c3b921207d45e"
+    },
+    {
+      "path": "textures/planet-trappist-1g.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 1883826,
+      "sha256": "d0f66afd149ddd89741d0dc7f27cdf3a5c3d8fece8059b0b808aae670245b28d"
+    },
+    {
+      "path": "textures/planet-trappist-1h.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 1850822,
+      "sha256": "2243b3155ac2c33f3802b87b68db16449c76d4766046cfafcdcfd07c75933af6"
+    },
+    {
+      "path": "textures/sun-photosphere.png",
+      "required": true,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "bytes": 2266936,
+      "sha256": "82dfff47b8e261c206cb6f17ca4775ba4d0772a264a88a6c3213895fb0f26934"
+    },
+    {
+      "path": "textures/sun-corona.png",
+      "required": true,
+      "width": 2048,
+      "height": 2048,
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        230
+      ],
+      "content_bounds": [
+        82,
+        227,
+        1975,
+        1857
+      ],
+      "transparent_pixels": 2511055,
+      "bytes": 3420159,
+      "sha256": "02690b73a55a6826d7eca078e1d75fcc016a55a8eaa1a24b3b5164b9592d5989"
+    },
+    {
+      "path": "textures/blackhole-still.png",
+      "required": true,
+      "width": 2048,
+      "height": 2048,
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "content_bounds": [
+        57,
+        481,
+        1991,
+        1423
+      ],
+      "transparent_pixels": 3189488,
+      "bytes": 1474229,
+      "sha256": "4ccc3178fe0daca0d8b1881dc2b8ea242d297838f1aa4630231177be7ec1d32d"
+    },
+    {
+      "path": "textures/galaxy-milkyway.png",
+      "required": true,
+      "width": 4096,
+      "height": 4096,
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "content_bounds": [
+        377,
+        377,
+        3721,
+        3721
+      ],
+      "transparent_pixels": 7957783,
+      "bytes": 17865900,
+      "sha256": "2a8b37e7a4211e0eb928ca1954a3d9dd61ffe8e29d599e5c0b01a198fb926ea5"
+    },
+    {
+      "path": "textures/galaxy-andromeda.png",
+      "required": true,
+      "width": 4096,
+      "height": 4096,
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "content_bounds": [
+        373,
+        377,
+        3725,
+        3720
+      ],
+      "transparent_pixels": 7892229,
+      "bytes": 16631639,
+      "sha256": "8da71164bf82a045fa42e2a99b65780a1b5bb6117950e1de7f83588187f8a1a6"
+    },
+    {
+      "path": "textures/galaxy-milkyway-edge.png",
+      "required": true,
+      "width": 4096,
+      "height": 1024,
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "content_bounds": [
+        198,
+        45,
+        3898,
+        979
+      ],
+      "transparent_pixels": 1507571,
+      "bytes": 2910232,
+      "sha256": "781e02d4b7469b9b495fa83e2f894f4bcd029ac1137f35df4f22b7dbd2b2a5c5"
+    },
+    {
+      "path": "sprites/warp-bubble-8x1.png",
+      "required": true,
+      "width": 4096,
+      "height": 512,
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "content_bounds": [
+        9,
+        129,
+        4087,
+        382
+      ],
+      "transparent_pixels": 1521450,
+      "first_last_tile_mean_byte_difference": 0.0,
+      "tile_order": "left to right, 512 \u00d7 512",
+      "bytes": 1136631,
+      "sha256": "59bce8e61afc59b88818d141a0efb1ba7c03da90aa8e2f692c980ac14b6bf979"
+    },
+    {
+      "path": "sprites/shatter-debris-4x4.png",
+      "required": true,
+      "width": 1024,
+      "height": 1024,
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "content_bounds": [
+        65,
+        91,
+        1000,
+        979
+      ],
+      "transparent_pixels": 941090,
+      "tile_order": "top-left origin, row-major, 256 \u00d7 256",
+      "tile_content_bounds": [
+        [
+          102,
+          102,
+          154,
+          154
+        ],
+        [
+          98,
+          98,
+          158,
+          158
+        ],
+        [
+          94,
+          94,
+          162,
+          162
+        ],
+        [
+          90,
+          91,
+          166,
+          165
+        ],
+        [
+          88,
+          84,
+          168,
+          167
+        ],
+        [
+          86,
+          77,
+          176,
+          169
+        ],
+        [
+          82,
+          69,
+          182,
+          174
+        ],
+        [
+          78,
+          62,
+          187,
+          178
+        ],
+        [
+          74,
+          56,
+          194,
+          180
+        ],
+        [
+          71,
+          49,
+          200,
+          183
+        ],
+        [
+          70,
+          41,
+          205,
+          187
+        ],
+        [
+          68,
+          34,
+          212,
+          192
+        ],
+        [
+          65,
+          28,
+          218,
+          196
+        ],
+        [
+          61,
+          21,
+          223,
+          202
+        ],
+        [
+          57,
+          15,
+          227,
+          206
+        ],
+        [
+          54,
+          8,
+          232,
+          211
+        ]
+      ],
+      "bytes": 658205,
+      "sha256": "9df017649b286a68ec8e356fffb9ab16be8800f82a0663818b97ad07b165b2f8"
+    },
+    {
+      "path": "textures/galaxy-andromeda-inclined.png",
+      "required": false,
+      "width": 4096,
+      "height": 4096,
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "content_bounds": [
+        432,
+        864,
+        3497,
+        2973
+      ],
+      "transparent_pixels": 14459144,
+      "bytes": 7702867,
+      "sha256": "0650e14c010f4e3cf789107b239d4af716e94d9e34b0e7a6f23644e26d9550b0"
+    },
+    {
+      "path": "textures/planet-barnard-d-emissive.png",
+      "required": false,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 247370,
+      "sha256": "e93ba7e93633e4f514daf91ae08a5259a3d853a2bf743e4a954f41b55b92283c"
+    },
+    {
+      "path": "textures/planet-earth-emissive.png",
+      "required": false,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 9823,
+      "sha256": "89691262b1f8f820fc37af4ac1c6546718bd8daeb1564953cc32e05273d957fd"
+    },
+    {
+      "path": "textures/planet-earth-roughness.png",
+      "required": false,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 993467,
+      "sha256": "224f3ece904464e314c150ef32188ec9b8287cd12e63db98a63dccc45be5bf5c"
+    },
+    {
+      "path": "textures/planet-sirius-b-emissive.png",
+      "required": false,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 313143,
+      "sha256": "5be8a4790d28587174606f5bd7257092e298b93a7e1dadeedca431a36711454a"
+    },
+    {
+      "path": "textures/planet-trappist-1b-emissive.png",
+      "required": false,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 224718,
+      "sha256": "5cc93ad6121d9761b2413e95ff26795f240ed44331a2acb690c6ebc139bebbcf"
+    },
+    {
+      "path": "textures/planet-trappist-1e-roughness.png",
+      "required": false,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 866815,
+      "sha256": "55397a72f8fd19272e6aa745b15d7745bc05f3c61a82dc9f946b09aff50ce471"
+    },
+    {
+      "path": "textures/planet-trappist-1f-roughness.png",
+      "required": false,
+      "width": 2048,
+      "height": 1024,
+      "mode": "RGB",
+      "uv_seam_mean_byte_difference": 0.0,
+      "bytes": 812595,
+      "sha256": "006caa32022fae2afce6de0f3072c8e5329756408b808a9aa97336c45863c0a4"
+    }
+  ],
+  "video": {
+    "path": "video/blackhole-loop.mov",
+    "bytes": 19033325,
+    "sha256": "368f292a60b6b55d60c63f86a5af1e69aae05d9a597059bc90d0d74402acf5aa",
+    "codec": "HEVC with alpha",
+    "native_decode": {
+      "partial_alpha_pixels_first_frame": 57838,
+      "fps": 30,
+      "transparent_pixels_first_frame": 886976,
+      "alpha_min": 0,
+      "width": 1080,
+      "last_to_first_byte_delta": 1.294062285665295,
+      "duration_seconds": 12,
+      "mean_adjacent_frame_byte_delta": 1.0811082614744898,
+      "alpha_max": 255,
+      "height": 1080,
+      "decoded_frames": 360,
+      "opaque_pixels_first_frame": 221586,
+      "contains_alpha_characteristic": true,
+      "codec": "HEVC",
+      "max_adjacent_frame_byte_delta": 1.2559589334705075
+    }
+  },
+  "errors": []
+}

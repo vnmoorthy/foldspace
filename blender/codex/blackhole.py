@@ -230,6 +230,7 @@ def main():
         save_agx(shade(m,0),filename)
     timing = {'still_seconds':round(time.monotonic()-start,3)}
     checks = {'null_first_integral_max_relative_error':table[-1], 'shadow_radius_rs':BC,
+              'ray_check_resolution':map_size,
               'photon_orbit_radius_rs':1.5,'disc_inner_radius_rs':INNER,
               'higher_order_pixels':int(np.sum(m['order']>0)),
               'loop_phase_0_vs_1_max_delta':float(np.max(np.abs(shade(m,0)-shade(m,1)))),
@@ -241,9 +242,15 @@ def main():
         m = shading_setup(ray_map(1080,table))
         del table
         for frame in range(360):
-            if args.resume and (frames/f'{frame:04d}.png').exists():
-                continue
-            save_agx(shade(m,frame/360),frames/f'{frame:04d}.png')
+            frame_path = frames/f'{frame:04d}.png'
+            if args.resume and frame_path.exists():
+                # An interrupted PNG may exist before its last chunk is written.
+                with frame_path.open('rb') as saved:
+                    saved.seek(-12, 2) if frame_path.stat().st_size >= 12 else saved.seek(0)
+                    complete = saved.read() == b'\x00\x00\x00\x00IEND\xaeB`\x82'
+                if complete:
+                    continue
+            save_agx(shade(m,frame/360),frame_path)
             if frame % 30 == 0:
                 print(f'Frame {frame}/360; elapsed {time.monotonic()-start:.1f}s',flush=True)
         video = ROOT/'assets/video/blackhole-loop.mov'
@@ -255,7 +262,8 @@ def main():
                         '-color_primaries','bt709','-color_trc','iec61966-2-1','-colorspace','bt709',
                         '-movflags','+faststart','-an',str(video)],check=True)
     timing['total_seconds'] = round(time.monotonic()-start,3)
-    result = {'mode':'quick' if args.quick else 'final','checks':checks,'timing':timing}
+    result = {'mode':'quick' if args.quick else 'final','resumed':args.resume,
+              'checks':checks,'timing':timing}
     (OUT/('quick-report.json' if args.quick else 'final-report.json')).write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result,indent=2),flush=True)
 

@@ -26,8 +26,11 @@ def spiral_fields(x,y,m31=False,bulge_coords=None):
     phase=theta-np.log(np.maximum(r,.055)/.24)/pitch-.43
     perturb=(fbm(x*17,y*17,7,4)-.5)*.40
     distance=np.arctan2(np.sin(count*(phase+perturb)),np.cos(count*(phase+perturb)))/count
-    width=.13+.020/np.maximum(r,.13)
+    cloud=fbm(x*14,y*14,83,4)
+    width=(.18+.024/np.maximum(r,.13))*(.65+cloud)
     arm=np.exp(-(distance/width)**2)
+    diffuse_arm=np.exp(-(distance/(width*2.1))**2)
+    arm=.62*arm+.38*diffuse_arm
     arm*=smoothstep(.17,.32,r)
     envelope=(1-smoothstep(.78,1.03,r))*np.exp(-r*1.3)
     broad=fbm(x*5,y*5,12,5)
@@ -35,13 +38,13 @@ def spiral_fields(x,y,m31=False,bulge_coords=None):
     clumps=smoothstep(.42,.8,fbm(x*43,y*43,62,4))
     # Dust ridges are slightly displaced to the inner edge of each arm.
     dust_distance=np.arctan2(np.sin(count*(phase+perturb+.073)),np.cos(count*(phase+perturb+.073)))/count
-    dust=np.exp(-(dust_distance/(width*.30))**2)*smoothstep(.18,.35,r)
+    dust=np.exp(-(dust_distance/(width*(.18+.42*cloud)))**2)*smoothstep(.18,.35,r)
     dust*=.45+.55*fbm(x*62,y*62,22,4)
     if m31:
         # Disc radius 110 kly = 33.7 kpc: the 10 kpc ring is at r=.297.
-        ring=np.exp(-((r-.297)/.035)**2)
-        outerring=np.exp(-((r-.59)/.052)**2)
-        arm=.53*arm+.95*ring*(.55+.45*broad)+.28*outerring
+        ring=np.exp(-((r-.297-(cloud-.5)*.032)/.052)**2)
+        outerring=np.exp(-((r-.59-(cloud-.5)*.045)/.069)**2)
+        arm=.70*arm+.70*ring*(.30+.95*broad)+.24*outerring
         dust=np.maximum(dust*.66, np.exp(-((r-.284)/.016)**2)*(.65+.35*filigree))
     else:
         # A short Orion spur between the principal arms; no complete fifth arm.
@@ -52,11 +55,14 @@ def spiral_fields(x,y,m31=False,bulge_coords=None):
     blue=np.array([.57,.80,1.25],np.float32)
     old=np.array([.55,.55,.57],np.float32)
     red=np.array([1.15,.10,.24],np.float32)
-    radiance=(envelope*(.38+.27*broad))[...,None]*old
-    radiance+=(envelope*arm*(.8+3.4*clumps)*(.35+1.1*filigree))[...,None]*blue
+    grain=.48+.9*noise2(x*180,y*180,71)
+    patch=.14+2.5*smoothstep(.28,.73,cloud)
+    radiance=(envelope*(.38+.27*broad)*grain)[...,None]*old
+    radiance+=(envelope*arm*patch*(.48+3.0*clumps)*(.30+1.3*filigree))[...,None]*blue
     knots=arm*np.maximum(noise2(x*115,y*115,93)-.65,0)**2*22
     radiance+=(knots*envelope)[...,None]*red
-    extinction=np.exp(-dust*(2.5+1.4*filigree))
+    ragged_dust=smoothstep(.46,.79,fbm(x*25,y*25,91,4))*diffuse_arm
+    extinction=np.exp(-dust*(1.5+1.1*filigree)-ragged_dust*1.8)
     radiance*=extinction[...,None]
     # Yellow-white central old stellar population; resolved bar only for MW.
     if m31:
@@ -75,7 +81,7 @@ def spiral_fields(x,y,m31=False,bulge_coords=None):
         core=2.4*np.exp(-(r/.024)**1.15)
         corecol=np.array([1.35,1.19,.88],np.float32)
     radiance+=(bulge+bar+core)[...,None]*corecol
-    alpha=np.clip((envelope*(.65+arm*.64)+bulge+bar+core)*1.15,0,1)
+    alpha=np.clip((envelope*(.52+arm*.68)*(.68+.62*cloud)+bulge+bar+core)*1.15,0,1)
     alpha*=1-smoothstep(1,1.05,r)
     # Keep dark dust inside the disc opaque enough to read as absorption.
     return radiance,alpha
@@ -85,11 +91,14 @@ def add_stars(rgba,m31=False,inclined=False):
     """Deterministic subpixel stellar clustering, not a measured catalogue."""
     n=rgba.shape[0]
     rng=np.random.default_rng(17031 if m31 else 17340)
-    number=34000 if n>256 else 1600
+    number=150000 if n>256 else 2800
     r=rng.uniform(.23,.96,number)
     arms=rng.integers(0,2 if m31 else 4,number)
     theta=np.log(r/.24)/(.27 if m31 else .28)+.43+arms*(2*np.pi/(2 if m31 else 4))
-    theta+=rng.normal(0,.055,number)
+    theta+=rng.normal(0,.15,number)
+    # An older inter-arm population avoids an empty, smooth disc between arms.
+    interarm=rng.random(number)<.35
+    theta[interarm]=rng.uniform(-np.pi,np.pi,interarm.sum())
     x=r*np.cos(theta)
     y=r*np.sin(theta)
     if inclined:
@@ -100,7 +109,7 @@ def add_stars(rgba,m31=False,inclined=False):
     py=np.rint((y/1.24+1)*.5*n-.5).astype(int)
     valid=(px>2)&(py>2)&(px<n-3)&(py<n-3)
     px,py=px[valid],py[valid]
-    light=np.minimum(rng.lognormal(-1.6,.7,number),1.5)[valid]
+    light=np.minimum(rng.lognormal(-1.85,.9,number),1.8)[valid]
     if n<=256:
         light*=.17
     colours=np.tile(np.array([.7,.9,1.3]),(len(light),1))
@@ -180,7 +189,9 @@ def main():
     times={}
     for name,build in products:
         start=time.monotonic()
+        print('Generating',name,flush=True)
         rgba=build()
+        print('Rendering',name,'after',round(time.monotonic()-start,2),'seconds of field generation',flush=True)
         render_plane(rgba,out/name,quick)
         # An opaque black background makes faint transparency visible in review.
         if quick:
