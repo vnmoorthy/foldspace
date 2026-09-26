@@ -282,9 +282,11 @@ struct GalaxyMapView: View {
                            style: StrokeStyle(lineWidth: 1.5, dash: [5, 5], dashPhase: CGFloat(t * 25)))
                 var ticks = Path()
                 for i in 0..<4 {
-                    let a = Double(i) * .pi / 2 + .pi / 4
-                    let inner = CGPoint(x: p.x + cos(a) * (r + 3), y: p.y + sin(a) * (r + 3))
-                    let outer = CGPoint(x: p.x + cos(a) * (r + 9), y: p.y + sin(a) * (r + 9))
+                    let a: Double = Double(i) * .pi / 2 + .pi / 4
+                    let ca: CGFloat = CGFloat(Foundation.cos(a))
+                    let sa: CGFloat = CGFloat(Foundation.sin(a))
+                    let inner = CGPoint(x: p.x + ca * (r + 3), y: p.y + sa * (r + 3))
+                    let outer = CGPoint(x: p.x + ca * (r + 9), y: p.y + sa * (r + 9))
                     ticks.move(to: inner)
                     ticks.addLine(to: outer)
                 }
