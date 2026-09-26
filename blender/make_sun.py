@@ -6,8 +6,8 @@ Layers (all emission, Cycles or EEVEE, no lamps — the Sun is the lamp)
     looping 4-D Voronoi cell field (bright cell centres, dark intergranular lanes; real granules are
     ~1000 km ≈ 1/700 R☉, drawn ~10x too large so they read at phone size), sunspots restricted to the
     ±30° activity belts with umbra ≈ 3800 K and penumbra ≈ 5000 K,
-    and limb darkening I(μ)/I(1) = 1 − u(1 − μ), u = 0.6 (linear law, V band; Cox 2000, Allen's
-    Astrophysical Quantities). μ = n·v from the Geometry node.
+    and limb darkening I(μ)/I(1) = 1 − u(1 − μ) = 0.3 + 0.7 μ, u = 0.7 (linear law, V band; Cox 2000,
+    Allen's Astrophysical Quantities; the BLENDER-CODEX-BRIEF contract). μ = n·v from the Geometry node.
   * chromosphere: a 1.012 R☉ shell glowing Hα (656.3 nm) only at the limb.
   * corona: a camera-facing plane with the Baumbach (1937) white-light brightness law
     B(r)/B☉ = 0.0532 r^-2.5 + 1.425 r^-7 + 2.565 r^-17   (r in solar radii; real corona ≈ 10^-6 of the
@@ -33,7 +33,7 @@ from common import log, math_node, vmath_node, noise, voronoi, mapping, blackbod
 T_EFF = 5772.0
 T_UMBRA = 3800.0
 T_PENUMBRA = 5000.0
-LIMB_U = 0.6
+LIMB_U = 0.7
 
 
 def add_flags(p):
@@ -41,6 +41,8 @@ def add_flags(p):
     p.add_argument("--prominences", type=int, default=4)
     p.add_argument("--granule-scale", type=float, default=70.0, help="Voronoi cells per unit (visual, not to scale)")
     p.add_argument("--spots", type=float, default=0.86, help="sunspot threshold 0..1 (higher = fewer spots)")
+    p.add_argument("--gain", type=float, default=3.0,
+                   help="photosphere emission strength (exposure). ~3 keeps the limb-darkening gradient visible under AgX")
     p.add_argument("--dive", type=float, default=0.0,
                    help="0 = seen from space; 1 = camera inside the photosphere (SunDiveView backdrop)")
 
@@ -103,7 +105,7 @@ def photosphere_material(scene, args, obj):
     spotdim = math_node(nodes, links, "SUBTRACT", 1.0, math_node(nodes, links, "ADD",
                         math_node(nodes, links, "MULTIPLY", umbra, 0.8), math_node(nodes, links, "MULTIPLY", penumbra, 0.3)))
     strength = math_node(nodes, links, "MULTIPLY", math_node(nodes, links, "MULTIPLY", bright, limb), spotdim)
-    strength = math_node(nodes, links, "MULTIPLY", strength, 14.0)
+    strength = math_node(nodes, links, "MULTIPLY", strength, args.gain)
 
     em = nodes.new("ShaderNodeEmission")
     links.new(col, em.inputs["Color"])
@@ -134,8 +136,10 @@ def corona_material(scene, obj, size):
     tc = nodes.new("ShaderNodeTexCoord")
     sep = nodes.new("ShaderNodeSeparateXYZ")
     links.new(tc.outputs["Object"], sep.inputs["Vector"])
-    x = math_node(nodes, links, "MULTIPLY", sep.outputs["X"], size / 2.0)   # plane is unit-square scaled by `size`
-    y = math_node(nodes, links, "MULTIPLY", sep.outputs["Y"], size / 2.0)
+    # primitive_plane_add(size=1) spans local ±0.5; the object is scaled by `size`, so world = local × size
+    # and r is in solar radii (photosphere radius 1). (An earlier ×size/2 halved r and doubled the corona.)
+    x = math_node(nodes, links, "MULTIPLY", sep.outputs["X"], size)
+    y = math_node(nodes, links, "MULTIPLY", sep.outputs["Y"], size)
     r = math_node(nodes, links, "SQRT", math_node(nodes, links, "ADD", math_node(nodes, links, "MULTIPLY", x, x), math_node(nodes, links, "MULTIPLY", y, y)))
     r = math_node(nodes, links, "MAXIMUM", r, 1.0)
     baum = math_node(nodes, links, "ADD",

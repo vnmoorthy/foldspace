@@ -3,14 +3,14 @@ render_sprites.py — pack a directory of rendered frames into a sprite sheet (+
 turn them into an HEVC-with-alpha .mov for AVPlayer.
 
 Pack (Pillow if importable, else numpy through bpy — Blender's Python ships numpy but not Pillow):
-  Blender --background --python render_sprites.py -- --frames out/warp_bubble --cols 8
+  Blender --background --python render_sprites.py -- --frames-dir out/warp_bubble --cols 8
   → out/warp_bubble_sheet.png  +  out/warp_bubble_sheet.json
      {"frame_width": 512, "frame_height": 512, "columns": 8, "rows": 8, "count": 60, "fps": 30, ...}
   SpriteKit/SwiftUI reads frame i at (i % columns, i / columns). Keep sheets ≤ 4096×4096 (Metal
   texture limit on iPhone is 16384, but 4096 keeps memory at 64 MB RGBA and loads instantly).
 
 HEVC with alpha (needs ffmpeg + Apple's avconvert; both present on this Mac):
-  Blender --background --python render_sprites.py -- --frames out/black_hole --hevc --fps 30
+  Blender --background --python render_sprites.py -- --frames-dir out/black_hole --hevc --fps 30
   → ffmpeg PNG → ProRes 4444 (yuva444p10le) → avconvert PresetHEVC1920x1080WithAlpha → out/black_hole.mov
   AVPlayerLayer plays it with transparency (hvc1, alpha channel), 12 s loop via AVPlayerLooper.
 
@@ -36,7 +36,8 @@ from common import log  # noqa: E402
 
 
 def add_flags(p):
-    p.add_argument("--frames", default=None, help="directory of frame PNGs")
+    # NB: common.parse_args already owns --frames (frame COUNT); the input directory is --frames-dir.
+    p.add_argument("--frames-dir", "--dir", dest="frames_dir", default=None, help="directory of frame PNGs")
     p.add_argument("--pattern", default="*.png")
     p.add_argument("--cols", type=int, default=0, help="columns (default: ceil(sqrt(n)))")
     p.add_argument("--name", default=None, help="output basename (default <dir>_sheet)")
@@ -162,7 +163,7 @@ def render_demo_frames(args, count=16, size=64):
     ring.keyframe_insert("rotation_euler", frame=1)
     ring.rotation_euler = (math.radians(60), 0, 2 * math.pi)
     ring.keyframe_insert("rotation_euler", frame=count + 1)
-    for fc in ring.animation_data.action.fcurves:
+    for fc in common.action_fcurves(ring.animation_data.action):
         for kp in fc.keyframe_points:
             kp.interpolation = "LINEAR"
     common.add_camera(scene, (0, -4.5, 2.0), (0, 0, 0), fov_deg=40)
@@ -172,19 +173,19 @@ def render_demo_frames(args, count=16, size=64):
 
 def main():
     args = common.parse_args("FOLDSPACE sprite packer / HEVC-alpha exporter", add_flags)
-    if args.quick and not args.frames:
-        args.frames = render_demo_frames(args)
+    if args.quick and not args.frames_dir:
+        args.frames_dir = render_demo_frames(args)
         args.cols = args.cols or 4
-    if not args.frames:
-        log("nothing to do: pass --frames DIR (or --quick for the self-test)")
+    if not args.frames_dir:
+        log("nothing to do: pass --frames-dir DIR (or --quick for the self-test)")
         return
-    frames = sorted(glob.glob(os.path.join(args.frames, args.pattern)))
+    frames = sorted(glob.glob(os.path.join(args.frames_dir, args.pattern)))
     if args.max_frames:
         frames = frames[:args.max_frames]
     if not frames:
-        log(f"no frames matching {args.pattern} in {args.frames}")
+        log(f"no frames matching {args.pattern} in {args.frames_dir}")
         return
-    name = args.name or (os.path.basename(os.path.normpath(args.frames)) + "_sheet")
+    name = args.name or (os.path.basename(os.path.normpath(args.frames_dir)) + "_sheet")
     outputs = []
     if not args.no_sheet:
         out_png = os.path.join(args.out, f"{name}.png")
@@ -199,7 +200,7 @@ def main():
             f"{'OK' if diff <= 1.0 else 'MISMATCH'}")
         outputs += [out_png, out_png.replace(".png", ".json")]
     if args.hevc:
-        mov = hevc_alpha(args.frames, args.pattern, args.fps, os.path.join(args.out, f"{name.replace('_sheet', '')}.mov"))
+        mov = hevc_alpha(args.frames_dir, args.pattern, args.fps, os.path.join(args.out, f"{name.replace('_sheet', '')}.mov"))
         if mov:
             outputs.append(mov)
     log("OUTPUTS: " + ", ".join(outputs))

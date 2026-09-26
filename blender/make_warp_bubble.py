@@ -46,7 +46,7 @@ def add_flags(p):
     p.add_argument("--vs", type=float, default=1.0, help="bubble speed in c (York time scales linearly)")
     p.add_argument("--amp", type=float, default=1.6, help="vertical exaggeration of θ")
     p.add_argument("--quality", type=float, default=1.0, help="bubble stability 0..1 (<1 adds wall jitter)")
-    p.add_argument("--form", action="store_true", help="animate the bubble forming (shape key 0→1) instead of scrolling")
+    p.add_argument("--form", action="store_true", help="animate the bubble forming and relaxing (shape key 0→1→0) instead of scrolling")
     p.add_argument("--stars", action="store_true", help="opaque render with an aberrated, Doppler-shifted starfield")
     p.add_argument("--beta", type=float, default=0.85, help="apparent β for the star aberration (visual)")
     p.add_argument("--cells", type=float, default=1.0, help="grid cells per scene unit")
@@ -93,11 +93,15 @@ def build_grid(scene, args):
         flat = co.copy()
         flat[:, 2] = z
         key.data.foreach_set("co", flat.reshape(-1))
-        key.value = 0.0
-        key.keyframe_insert("value", frame=1)
-        key.value = 1.0
-        key.keyframe_insert("value", frame=scene.frame_end)
-        for fc in grid.data.shape_keys.animation_data.action.fcurves:
+        # flat → peak → flat (sine-eased), so an 8-frame sheet reads 0, ., ., peak, peak, ., ., 0 and loops.
+        if scene.frame_end < 3:
+            key.value = 1.0                                   # a single still: show the full surface
+        else:
+            mid = (1 + scene.frame_end) // 2
+            for frame, value in ((1, 0.0), (mid, 1.0), (scene.frame_end, 0.0)):
+                key.value = value
+                key.keyframe_insert("value", frame=frame)
+        for fc in common.action_fcurves(grid.data.shape_keys.animation_data.action):
             for kp in fc.keyframe_points:
                 kp.interpolation = "SINE"
                 kp.easing = "EASE_IN_OUT"
@@ -123,10 +127,11 @@ def grid_material(scene, args, obj):
     gy = math_node(nodes, links, "MULTIPLY", sep.outputs["Y"], args.cells)
 
     def line(coord, width=0.06):
+        """1 on a grid line (fract ≈ 0 or 1, i.e. d = |fract − ½| > ½ − width), 0 inside the cell."""
         f = math_node(nodes, links, "FRACT", coord)
         d = math_node(nodes, links, "ABSOLUTE", math_node(nodes, links, "SUBTRACT", f, 0.5))
-        return math_node(nodes, links, "SMOOTH_MIN", 0, 0, 0) if False else \
-            math_node(nodes, links, "MULTIPLY", math_node(nodes, links, "SUBTRACT", 0.5 - width, d, clamp=True), 1.0 / width, clamp=True)
+        return math_node(nodes, links, "MULTIPLY", math_node(nodes, links, "SUBTRACT", d, 0.5 - width, clamp=True),
+                         1.0 / width, clamp=True)
 
     lines = math_node(nodes, links, "MAXIMUM", line(gx), line(gy))
     lines = math_node(nodes, links, "POWER", lines, 0.6)
@@ -134,6 +139,21 @@ def grid_material(scene, args, obj):
     attr.attribute_name = "york"
     york = attr.outputs["Color"]
     mag = attr.outputs["Alpha"]
+    if args.form and obj.data.shape_keys is not None:
+        # Colour and alpha follow the forming surface: scale the York attribute by the shape-key value.
+        fv = nodes.new("ShaderNodeValue")
+        fv.name = fv.label = "form"
+        fc = fv.outputs[0].driver_add("default_value")
+        fc.driver.type = "SCRIPTED"
+        var = fc.driver.variables.new()
+        var.name = "k"
+        var.type = "SINGLE_PROP"
+        var.targets[0].id_type = "KEY"
+        var.targets[0].id = obj.data.shape_keys
+        var.targets[0].data_path = 'key_blocks["york"].value'
+        fc.driver.expression = "k"
+        york = vmath_node(nodes, links, "SCALE", york, scale=fv.outputs[0])
+        mag = math_node(nodes, links, "MULTIPLY", mag, fv.outputs[0])
     # Fill: York colour, lines: white-cyan, brighter over the wall.
     line_col = nodes.new("ShaderNodeRGB")
     line_col.outputs[0].default_value = (0.62, 0.95, 1.0, 1.0)

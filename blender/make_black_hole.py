@@ -70,6 +70,8 @@ def add_flags(p):
     p.add_argument("--stars", type=float, default=1.0, help="starfield strength (0 hides it)")
     p.add_argument("--alpha-disc-only", action="store_true", help="transparent where stars would be (HEVC-alpha overlay)")
     p.add_argument("--step", type=float, default=0.02, help="OSL integrator Δφ (radians)")
+    p.add_argument("--gain", type=float, default=2.0,
+                   help="disc emission multiplier (exposure; keep the receding side unclipped so g⁴ beaming reads)")
 
 
 # ----------------------------------------------------------------------------- physics check (pure python)
@@ -127,6 +129,7 @@ def physics_check():
 
 OSL_SOURCE = r"""
 // Schwarzschild null-geodesic tracer for one camera ray. G = c = 1, Rs in scene units.
+// iu = 1/r (Binet variable). Named iu because `u`, `v` are reserved OSL globals.
 shader schwarzschild(
     vector CamPos = vector(0, -22, 0),
     vector BH = vector(0, 0, 0),
@@ -162,31 +165,31 @@ shader schwarzschild(
     vector a1 = (fabs(n[0]) < 0.9) ? normalize(cross(n, vector(1, 0, 0))) : normalize(cross(n, vector(0, 1, 0)));
     vector a2 = cross(n, a1);
 
-    float u = 1.0 / r0;
-    float b = r0 * sp / sqrt(max(1.0 - Rs * u, 1e-6));
-    float w2 = 1.0 / (b * b) - u * u * (1.0 - Rs * u);
+    float iu = 1.0 / r0;
+    float b = r0 * sp / sqrt(max(1.0 - Rs * iu, 1e-6));
+    float w2 = 1.0 / (b * b) - iu * iu * (1.0 - Rs * iu);
     float w = sqrt(max(w2, 0.0));
-    if (dr > 0.0) w = -w;                    // moving outward => u decreasing
+    if (dr > 0.0) w = -w;                    // moving outward => iu decreasing
     float phi = 0.0;
     vector pos_prev = O;
     float side_prev = dot(O, n);
     float h = StepPhi;
 
     for (int i = 0; i < MaxSteps; i++) {
-        float k1u = w,                     k1w = -u + 1.5 * Rs * u * u;
-        float u2 = u + 0.5 * h * k1u,      w2_ = w + 0.5 * h * k1w;
+        float k1u = w,                     k1w = -iu + 1.5 * Rs * iu * iu;
+        float u2 = iu + 0.5 * h * k1u,      w2_ = w + 0.5 * h * k1w;
         float k2u = w2_,                   k2w = -u2 + 1.5 * Rs * u2 * u2;
-        float u3 = u + 0.5 * h * k2u,      w3 = w + 0.5 * h * k2w;
+        float u3 = iu + 0.5 * h * k2u,      w3 = w + 0.5 * h * k2w;
         float k3u = w3,                    k3w = -u3 + 1.5 * Rs * u3 * u3;
-        float u4 = u + h * k3u,            w4 = w + h * k3w;
+        float u4 = iu + h * k3u,            w4 = w + h * k3w;
         float k4u = w4,                    k4w = -u4 + 1.5 * Rs * u4 * u4;
-        u += h / 6.0 * (k1u + 2.0 * k2u + 2.0 * k3u + k4u);
+        iu += h / 6.0 * (k1u + 2.0 * k2u + 2.0 * k3u + k4u);
         w += h / 6.0 * (k1w + 2.0 * k2w + 2.0 * k3w + k4w);
         phi += h;
         Swept = phi;
-        if (u * Rs >= 1.0) { Kind = 2.0; return; }             // through the horizon
-        if (u <= 0.0) { Kind = 0.0; EscapeDir = normalize(pos_prev - O + 1e-3 * D); return; }
-        float r = 1.0 / u;
+        if (iu * Rs >= 1.0) { Kind = 2.0; return; }             // through the horizon
+        if (iu <= 0.0) { Kind = 0.0; EscapeDir = normalize(pos_prev - O + 1e-3 * D); return; }
+        float r = 1.0 / iu;
         vector pos = r * (cos(phi) * e1 + sin(phi) * e2);
         float side = dot(pos, n);
         if (side * side_prev < 0.0) {
@@ -214,7 +217,7 @@ shader schwarzschild(
 """
 
 
-def disc_shading(nodes, links, scene, R, CosV, Phi, tpeak, rout):
+def disc_shading(nodes, links, scene, R, CosV, Phi, tpeak, rout, gain=2.0):
     """Doppler-beamed, gravitationally redshifted thin-disc emission from (R, cos θ_v, φ). Returns (color, strength)."""
     # β = sqrt(1 / (2 (R − 1)))   (R in r_s units)
     beta = math_node(nodes, links, "SQRT", math_node(nodes, links, "DIVIDE", 1.0,
@@ -250,7 +253,7 @@ def disc_shading(nodes, links, scene, R, CosV, Phi, tpeak, rout):
                      math_node(nodes, links, "SUBTRACT", R, rout * 0.8), rout * 0.2, clamp=True))
     edge = math_node(nodes, links, "MAXIMUM", edge, 0.0)
     strength = math_node(nodes, links, "MULTIPLY", math_node(nodes, links, "MULTIPLY", g4, flux), math_node(nodes, links, "MULTIPLY", tex, edge))
-    strength = math_node(nodes, links, "MULTIPLY", strength, 6.0)
+    strength = math_node(nodes, links, "MULTIPLY", strength, gain)
     return color, strength, g
 
 
@@ -281,7 +284,8 @@ def build_osl(scene, args, cam, env_img):
     env.image = env_img
     links.new(scr.outputs["EscapeDir"], env.inputs["Vector"])
     stars = vmath_node(nodes, links, "SCALE", env.outputs["Color"], scale=args.stars)
-    dcol, dstr, _ = disc_shading(nodes, links, scene, scr.outputs["R"], scr.outputs["CosV"], scr.outputs["Phi"], args.tpeak, args.rout)
+    dcol, dstr, _ = disc_shading(nodes, links, scene, scr.outputs["R"], scr.outputs["CosV"], scr.outputs["Phi"], args.tpeak, args.rout,
+                                 args.gain)
     disc = vmath_node(nodes, links, "SCALE", dcol, scale=dstr)
     mixn = nodes.new("ShaderNodeMix")
     mixn.data_type = "VECTOR"
@@ -354,7 +358,7 @@ def build_fake(scene, args, cam, env_img):
     dl.new(pos, sep.inputs["Vector"])
     phi = math_node(dn, dl, "ARCTAN2", sep.outputs["Y"], sep.outputs["X"])
     inner = math_node(dn, dl, "GREATER_THAN", R, R_ISCO)
-    dcol, dstr, _ = disc_shading(dn, dl, scene, R, cosv, phi, args.tpeak, args.rout)
+    dcol, dstr, _ = disc_shading(dn, dl, scene, R, cosv, phi, args.tpeak, args.rout, args.gain)
     dstr = math_node(dn, dl, "MULTIPLY", dstr, inner)
     common.emission_over_transparent(dn, dl, do, dcol, dstr, inner)
     for m in (dmat,):

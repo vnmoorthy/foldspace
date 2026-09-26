@@ -58,6 +58,8 @@ def add_flags(p):
     p.add_argument("--bake-size", type=int, nargs=2, metavar=("W", "H"), default=None)
     p.add_argument("--base-hex", default=None, help="override the class base colour, e.g. C4613A (Mars)")
     p.add_argument("--rings", action="store_true", help="add a Saturn-style ring plane")
+    p.add_argument("--no-clouds", action="store_true", help="skip the cloud shell (look-dev / bake checks)")
+    p.add_argument("--no-atmosphere", action="store_true", help="skip the Rayleigh rim shell")
 
 
 def hex_rgb(h):
@@ -68,9 +70,12 @@ def hex_rgb(h):
 # ----------------------------------------------------------------------------- shared node bits
 
 def sphere_coords(nodes, links, seed):
-    """Object-space coordinates of the unit sphere, offset per seed so every world differs."""
+    """Returns (raw, offset): `raw` = object-space coordinates of the unit sphere (use for anything that is
+    a function of latitude: |z| caps, desert belts, storm centres); `offset` = the same shifted per seed so
+    every world's noise differs (use for texture lookups only — an offset z is NOT a latitude)."""
     tc = nodes.new("ShaderNodeTexCoord")
-    return mapping(nodes, links, tc.outputs["Object"], location=(seed * 1.37 % 7, seed * 0.61 % 5, seed * 2.1 % 11))
+    raw = tc.outputs["Object"]
+    return raw, mapping(nodes, links, raw, location=(seed * 1.37 % 7, seed * 0.61 % 5, seed * 2.1 % 11))
 
 
 def z_of(nodes, links, vec):
@@ -122,8 +127,8 @@ def surface_material(cls, seed, base_override=None, obj=None):
     links.new(bsdf.outputs[0], out.inputs["Surface"])
     bsdf.inputs["Metallic"].default_value = 0.0
     bsdf.inputs["Specular IOR Level"].default_value = 0.35
-    vec = sphere_coords(nodes, links, seed)
-    x, y, z = z_of(nodes, links, vec)
+    raw, vec = sphere_coords(nodes, links, seed)
+    x, y, z = z_of(nodes, links, raw)                 # latitude from the unit sphere, not the offset noise space
     absz = math_node(nodes, links, "ABSOLUTE", z)
     color = None
     roughness = 0.9
@@ -232,7 +237,7 @@ def surface_material(cls, seed, base_override=None, obj=None):
             # Anticyclonic storm: an oval elongated along longitude, sitting at −22° latitude.
             lat0, lon0 = math.radians(-22), math.radians(35 + seed * 40 % 300)
             centre = (math.cos(lat0) * math.cos(lon0), math.cos(lat0) * math.sin(lon0), math.sin(lat0))
-            dvec = vmath_node(nodes, links, "SUBTRACT", vec, centre)
+            dvec = vmath_node(nodes, links, "SUBTRACT", raw, centre)
             dvec = vmath_node(nodes, links, "MULTIPLY", dvec, (1.0, 1.0, 2.2))
             dist = vmath_node(nodes, links, "LENGTH", dvec)
             swirl = math_node(nodes, links, "MULTIPLY", math_node(nodes, links, "SUBTRACT",
@@ -341,7 +346,7 @@ def atmosphere_material(cls, sun_dir, obj):
 
 def cloud_material(seed, obj, coverage=0.55):
     mat, nodes, links, out = common.new_material("clouds", obj)
-    vec = sphere_coords(nodes, links, seed + 11)
+    _, vec = sphere_coords(nodes, links, seed + 11)
     n = noise(nodes, links, vec, scale=3.0, detail=9.0, roughness=0.6, distortion=0.8)
     alpha = smoothstep(nodes, links, n, coverage, coverage + 0.18)
     bsdf = nodes.new("ShaderNodeBsdfPrincipled")
@@ -400,13 +405,13 @@ def build_planet(scene, cls, args, sun_dir):
     seed = args.seed + CLASSES.index(cls) * 13
     body = common.add_uv_sphere(scene, "planet", radius=1.0, segments=128, rings=64)
     surface_material(cls, seed, hex_rgb(args.base_hex) if args.base_hex else None, body)
-    if cls in ATMOSPHERE:
+    if cls in ATMOSPHERE and not args.no_atmosphere:
         shell = common.add_uv_sphere(scene, "atmosphere", radius=1.035, segments=96, rings=48)
         atmosphere_material(cls, sun_dir, shell)
-    if cls in ("earthlike", "ocean"):
+    if cls in ("earthlike", "ocean") and not args.no_clouds:
         clouds = common.add_uv_sphere(scene, "clouds", radius=1.012, segments=96, rings=48)
         cloud_material(seed, clouds, coverage=0.5 if cls == "earthlike" else 0.58)
-    if args.rings or cls == "gasGiant" and args.planet == "gasGiant" and args.rings:
+    if args.rings:
         bpy.ops.mesh.primitive_plane_add(size=4.6)
         rings = bpy.context.active_object
         rings.name = "rings"

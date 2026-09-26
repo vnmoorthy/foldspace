@@ -13,8 +13,9 @@ Run headless:
 
     /Applications/Blender.app/Contents/MacOS/Blender --background --python make_sun.py -- --quick
 
-`--quick` = 256x256, few samples, a single frame, into blender/out/. Everything after the
-bare `--` is ours; Blender swallows the rest.
+`--quick` = 256x256, few samples, a single frame, into blender/out/, rendered on the CPU.
+Everything after the bare `--` is ours; Blender swallows the rest. Final renders default to the
+Metal GPU; Cycles' Metal backend hangs inside sandboxed shells, so pass `--device CPU` there.
 """
 
 import argparse
@@ -42,14 +43,19 @@ def parse_args(description, extra=None):
     """Parse everything after `--`. `extra(parser)` adds script-specific flags."""
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     p = argparse.ArgumentParser(description=description)
-    p.add_argument("--quick", action="store_true", help="256x256, few samples, 1 frame, < 60 s")
+    p.add_argument("--quick", action="store_true", help="256x256, few samples, 1 frame, CPU, < 60 s")
+    p.add_argument("--final", action="store_true",
+                   help="full-resolution defaults (this is also the default when --quick is absent; --quick wins if both)")
     p.add_argument("--out", default=OUT_DEFAULT, help="output directory (default blender/out)")
     p.add_argument("--res", type=int, nargs=2, metavar=("W", "H"), default=None)
     p.add_argument("--samples", type=int, default=None)
     p.add_argument("--frames", type=int, default=None, help="frames to render (1 = still)")
     p.add_argument("--fps", type=int, default=30)
     p.add_argument("--engine", choices=["CYCLES", "EEVEE"], default=None)
-    p.add_argument("--device", choices=["CPU", "GPU"], default="GPU")
+    p.add_argument("--device", choices=["CPU", "GPU", "AUTO"], default="AUTO",
+                   help="AUTO = CPU for --quick, Metal GPU otherwise. NOTE: Cycles' Metal backend hangs inside "
+                        "sandboxed shells (e.g. Claude Code's Bash tool); run from Terminal for GPU, or pass "
+                        "--device CPU / set FOLDSPACE_DEVICE=CPU")
     p.add_argument("--seed", type=int, default=7)
     p.add_argument("--view", choices=["AgX", "Filmic", "Standard"], default="AgX")
     p.add_argument("--save-blend", action="store_true", help="also write out/<name>.blend for Astra")
@@ -118,7 +124,15 @@ def fresh_scene(args, name, res=(1024, 1024), samples=64, engine="CYCLES", frame
         cyc.volume_bounces = 0
         cyc.caustics_reflective = False
         cyc.caustics_refractive = False
-        want_gpu = args.device == "GPU" and not force_cpu
+        device = args.device
+        if device == "AUTO":
+            device = "CPU" if args.quick else "GPU"
+        env_dev = os.environ.get("FOLDSPACE_DEVICE", "").upper()
+        if env_dev in ("CPU", "GPU"):
+            device = env_dev
+        want_gpu = device == "GPU" and not force_cpu
+        if want_gpu:
+            log("enabling Metal (if this line is the last thing you see, Metal is hanging: rerun with --device CPU)")
         cyc.device = "GPU" if (want_gpu and _enable_gpu()) else "CPU"
         log(f"Cycles on {cyc.device}, {samples} samples, {w}x{h}, {scene.frame_end} frame(s)")
     else:
@@ -392,25 +406,77 @@ def loop_seconds(scene):
     return scene.frame_end / scene.render.fps
 
 
+def action_fcurves(action):
+    """Every F-curve of an Action, on any Blender version. 4.4+ 'slotted' actions keep them in
+    layers → strips → channelbags and no longer expose `action.fcurves` (5.x removes it)."""
+    if action is None:
+        return []
+    fcs = getattr(action, "fcurves", None)
+    if fcs is not None:
+        try:
+            return list(fcs)
+        except Exception:
+            pass
+    out = []
+    for layer in getattr(action, "layers", []):
+        for strip in getattr(layer, "strips", []):
+            for cb in getattr(strip, "channelbags", []):
+                out.extend(cb.fcurves)
+    return out
+
+
 # ----------------------------------------------------------------------------- compositor glare
 
 def add_bloom(scene, threshold=1.0, strength=0.35, size=7):
-    """Post-process glare so emissive things bloom. Best-effort across Blender versions."""
+    """Post-process glare so emissive things bloom. Blender 5.x keeps the compositor in
+    `scene.compositing_node_group` (a CompositorNodeTree ending in a Group Output); 4.x used
+    `scene.node_tree` + a Composite node. Both are handled; failure only disables bloom."""
     try:
-        scene.use_nodes = True
         scene.render.use_compositing = True
-        nt = scene.node_tree
-        nt.nodes.clear()
+        if hasattr(scene, "compositing_node_group"):
+            nt = scene.compositing_node_group
+            if nt is None:
+                nt = bpy.data.node_groups.new(f"{scene.name}_compositor", "CompositorNodeTree")
+                scene.compositing_node_group = nt
+            nt.nodes.clear()
+            has_out = any(getattr(item, "in_out", "") == "OUTPUT" for item in nt.interface.items_tree)
+            if not has_out:
+                nt.interface.new_socket("Image", in_out="OUTPUT", socket_type="NodeSocketColor")
+            comp = nt.nodes.new("NodeGroupOutput")
+            comp_in = comp.inputs[0]
+        else:
+            scene.use_nodes = True
+            nt = scene.node_tree
+            nt.nodes.clear()
+            comp = nt.nodes.new("CompositorNodeComposite")
+            comp_in = comp.inputs["Image"]
         rl = nt.nodes.new("CompositorNodeRLayers")
-        comp = nt.nodes.new("CompositorNodeComposite")
+        rl.scene = scene
         glare = nt.nodes.new("CompositorNodeGlare")
-        for t in ("BLOOM", "FOG_GLOW"):
-            try:
-                glare.glare_type = t
-                break
-            except TypeError:
-                continue
-        for key, val in (("Threshold", threshold), ("Strength", strength), ("Size", size), ("Mix", 0.0)):
+        # 5.x: the glare type is a menu socket; 4.x: an enum property.
+        if "Type" in glare.inputs:
+            for t in ("BLOOM", "FOG_GLOW"):
+                try:
+                    glare.inputs["Type"].default_value = t
+                    break
+                except (TypeError, ValueError):
+                    continue
+        else:
+            for t in ("BLOOM", "FOG_GLOW"):
+                try:
+                    glare.glare_type = t
+                    break
+                except TypeError:
+                    continue
+        # Blender ≤ 4.3 took an integer `size` 6–9 (blur = 2^size px); 4.4+/5.x take a 0–1 fraction of the
+        # image. Accept the legacy integer and convert, so `size=7` never means "flood the whole frame".
+        if size > 1.0:
+            max_res = max(scene.render.resolution_x, scene.render.resolution_y, 1)
+            rel_size = max(0.02, min(0.35, (2.0 ** size) / max_res))
+        else:
+            rel_size = size
+        for key, val in (("Threshold", threshold), ("Strength", strength), ("Size", rel_size), ("Mix", 0.0),
+                         ("Quality", "MEDIUM")):
             if key in glare.inputs:
                 try:
                     glare.inputs[key].default_value = val
@@ -422,11 +488,12 @@ def add_bloom(scene, threshold=1.0, strength=0.35, size=7):
                 except Exception:
                     pass
         nt.links.new(rl.outputs["Image"], glare.inputs["Image"])
-        nt.links.new(glare.outputs["Image"], comp.inputs["Image"])
+        nt.links.new(glare.outputs["Image"], comp_in)
+        log(f"bloom: glare threshold {threshold}, strength {strength}, size {rel_size:.3f} of frame")
         return True
     except Exception as e:
         log(f"bloom skipped: {e}")
-        scene.use_nodes = False
+        scene.render.use_compositing = False
         return False
 
 
