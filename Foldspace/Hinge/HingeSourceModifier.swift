@@ -11,11 +11,16 @@ struct HingeSourceModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         #if DUO_SDK
+        // iOS 27.1: `onHingeChange(isEnabled:_:)` calls the closure with the old and new
+        // `DeviceHingeContext`. `context.hinge` is an optional `DeviceHinge` (nil = no hinge)
+        // with `angle: Angle` (180° when flat) and `status: .closed / .partiallyOpen / .fullyOpen`.
+        // Apple's guidance: use the hinge for interactions and effects, never for layout —
+        // layout comes from size classes, reserved regions and ArrangementView.
         content
-            .onHingeChange { status in
-                // `status` exposes the live hinge angle in degrees (0 = closed, 180 = flat).
+            .onHingeChange { _, newContext in
+                guard let hinge = newContext.hinge else { return }
                 engine.source = .duo
-                engine.ingest(angle: status.angle.degrees)
+                engine.ingest(angle: hinge.angle.degrees)
             }
         #else
         content
@@ -49,5 +54,26 @@ enum FoldGeometry {
 
     static func bottomHalf(in size: CGSize) -> CGRect {
         CGRect(x: 0, y: size.height / 2 + seamThickness / 2, width: size.width, height: size.height / 2 - seamThickness / 2)
+    }
+
+    /// The physical fold, if the system reports one. On iPhone Duo (iOS 27.1) this is the active
+    /// `.division` reserved region from `GeometryProxy.reservedRegions(kind:)`; everywhere else it is
+    /// the modelled seam at the vertical midpoint.
+    static func seamRect(in size: CGSize, proxy: GeometryProxy) -> CGRect {
+        #if DUO_SDK
+        if let fold = proxy.reservedRegions(kind: .division).first(where: { $0.isActive }) {
+            return fold.frame
+        }
+        #endif
+        return seamRect(in: size)
+    }
+
+    /// Camera cut-outs (`.occlusion` reserved regions) to keep HUD readouts away from.
+    static func occlusions(proxy: GeometryProxy) -> [CGRect] {
+        #if DUO_SDK
+        return proxy.reservedRegions(kind: .occlusion).map(\.frame)
+        #else
+        return []
+        #endif
     }
 }
