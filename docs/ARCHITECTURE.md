@@ -44,7 +44,7 @@ flowchart LR
     GS --> GR["GalacticRegistry\nfire-and-forget · retry queue"]
     GS --> AI["Ship computer\nscan briefings · log voice"]
     GR -- "REST /events" --> SB[("Supabase\nPostgres + PostgREST")]
-    AI -- "Responses API" --> OA[("OpenAI")]
+    AI -- "Chat Completions API" --> OA[("OpenAI")]
     GS -. "breadcrumbs · spans · errors" .-> SE[("Sentry")]
 ```
 
