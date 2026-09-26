@@ -1,0 +1,50 @@
+name: Foldspace
+options:
+  bundleIdPrefix: com.vnmoorthy
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+settings:
+  base:
+    SWIFT_VERSION: "5"
+    SWIFT_STRICT_CONCURRENCY: minimal
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+    # Add DUO_SDK here (or in Xcode 27.1: Build Settings → Active Compilation Conditions)
+    # to enable the native iPhone Duo hinge path in Hinge/HingeSourceModifier.swift.
+    SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited)"
+targets:
+  Foldspace:
+    type: application
+    platform: iOS
+    sources:
+      - path: Foldspace
+    info:
+      path: Foldspace/Info.plist
+      properties:
+        CFBundleDisplayName: FOLDSPACE
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+        UIRequiresFullScreen: false
+        NSMotionUsageDescription: "FOLDSPACE reads device motion to emulate the iPhone Duo hinge on non-folding iPhones."
+        UIUserInterfaceStyle: Dark
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vnmoorthy.foldspace
+        TARGETED_DEVICE_FAMILY: "1,2"
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_PREVIEWS: YES
