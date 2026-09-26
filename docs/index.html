@@ -187,6 +187,18 @@
   .shot figcaption { padding: 10px 12px; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; color: var(--muted); }
   .shot figcaption b { color: var(--cyan); font-weight: 600; }
 
+  /* visuals (Blender renders) */
+  .visuals { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .visuals .wide { grid-column: 1 / -1; }
+  @media (max-width: 760px) { .visuals { grid-template-columns: 1fr; } }
+  .vis { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+  .vis .img { display: block; aspect-ratio: 16 / 10; background: var(--bg); }
+  .vis.wide .img { aspect-ratio: 16 / 9; }
+  .vis img { display: block; width: 100%; height: 100%; object-fit: contain; }
+  .vis figcaption { padding: 12px 14px 14px; font-size: 0.92rem; color: var(--muted); border-top: 1px solid rgba(255,255,255,0.05); }
+  .vis figcaption b { display: block; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cyan); margin-bottom: 4px; }
+  .vis figcaption i { font-style: normal; color: var(--dim); }
+
   /* footer */
   footer { padding: 40px 0 60px; border-top: 1px solid rgba(255,255,255,0.06); color: var(--dim); font-size: 0.9rem; }
   footer .links { display: flex; flex-wrap: wrap; gap: 8px 20px; font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px; }
@@ -204,6 +216,7 @@
       <a href="#duo">Duo API</a>
       <a href="#architecture">Architecture</a>
       <a href="#stack">Stack</a>
+      <a href="#visuals">Visuals</a>
       <a href="#run" class="keep">Run it</a>
       <a class="gh" href="https://github.com/vnmoorthy/foldspace">GitHub</a>
     </nav>
@@ -491,6 +504,7 @@
   <div class="wrap">
     <p class="eyebrow">Screenshots</p>
     <h2>Seven moments, one hinge.</h2>
+    <p class="note">Captured in the simulator via the <code>FOLDSPACE_DEMO</code> launch hook. The frames land here when the build machine's Xcode reinstall completes; until then each slot shows its placeholder. The rendered universe is below.</p>
     <div class="gallery">
       <figure class="shot"><div class="ph" data-label="cockpit"><img src="screenshots/01-cockpit.png" alt="Cockpit: phone half-open, planet hologram sitting in the fold, console below" loading="lazy"></div><figcaption><b>01</b> Cockpit · phone half-open</figcaption></figure>
       <figure class="shot"><div class="ph" data-label="galaxy map"><img src="screenshots/02-galaxy-map.png" alt="Galaxy map on the full inner display with the phone laid flat" loading="lazy"></div><figcaption><b>02</b> Galaxy map · phone flat</figcaption></figure>
@@ -499,6 +513,36 @@
       <figure class="shot"><div class="ph" data-label="nova lance"><img src="screenshots/05-nova-lance.png" alt="Nova Lance: the crease glows while squeezed, then the planet shatters" loading="lazy"></div><figcaption><b>05</b> Nova Lance · squeeze + snap</figcaption></figure>
       <figure class="shot"><div class="ph" data-label="sagittarius a*"><img src="screenshots/06-sagittarius-a.png" alt="Sagittarius A* slingshot with time-dilation clocks" loading="lazy"></div><figcaption><b>06</b> Sagittarius A* · slingshot</figcaption></figure>
       <figure class="shot"><div class="ph" data-label="andromeda"><img src="screenshots/07-andromeda.png" alt="Andromeda finale: the Milky Way recedes as Andromeda rises out of the corner" loading="lazy"></div><figcaption><b>07</b> Andromeda · the finale</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="visuals">
+  <div class="wrap">
+    <p class="eyebrow">Visuals · Blender renders</p>
+    <h2>Real physics, rendered.</h2>
+    <p class="lede">Every texture in the game is procedural or computed from equations. Rendered in Blender 5.2 from the physics brief in <a href="https://github.com/vnmoorthy/foldspace/blob/main/docs/BLENDER-CODEX-BRIEF.md">docs/BLENDER-CODEX-BRIEF.md</a>; pipeline in <code>blender/</code> and <code>blender/codex/</code>. Method, assumptions and timings: <a href="https://github.com/vnmoorthy/foldspace/blob/main/assets/NOTES.md">assets/NOTES.md</a>.</p>
+    <div class="visuals">
+      <figure class="vis wide">
+        <a class="img" href="visuals/sagittarius-a.png" target="_blank" rel="noopener"><img src="visuals/sagittarius-a.png" width="1600" height="900" alt="Sagittarius A*: an accretion disc lensed over and under the black hole's shadow, with a thin photon ring" loading="lazy"></a>
+        <figcaption><b>Sagittarius A*</b>Schwarzschild null geodesics (RK4) bend the far side of the disc over and under the shadow; the photon ring sits on the 2.598 r<sub>s</sub> critical curve and Doppler beaming (g<sup>4</sup>) brightens the approaching side, after Luminet 1979 and DNGR (James, von Tunzelmann, Franklin &amp; Thorne 2015). <i>2K still + 12 s HEVC-alpha loop.</i></figcaption>
+      </figure>
+      <figure class="vis">
+        <a class="img" href="visuals/galaxies.png" target="_blank" rel="noopener"><img src="visuals/galaxies.png" width="1600" height="820" alt="The Milky Way face-on beside Andromeda inclined at 77 degrees" loading="lazy"></a>
+        <figcaption><b>Milky Way · Andromeda</b>Density-wave spirals on logarithmic arms (pitch ≈ 15°): four Milky Way arms and a 27 kly bar; M31 with its 10 kpc ring, M32 and M110, at its observed 77° inclination. <i>4096² RGBA planes.</i></figcaption>
+      </figure>
+      <figure class="vis">
+        <a class="img" href="visuals/planets.png" target="_blank" rel="noopener"><img src="visuals/planets.png" width="1792" height="1088" alt="Contact sheet of 26 rendered planet globes" loading="lazy"></a>
+        <figcaption><b>26 worlds</b>Procedural 2048 × 1024 equirectangular maps: zonal bands and the Great Red Spot on the giants, craters and ice on the rocky worlds, lava fissures as emission. Rayleigh atmosphere rims and lighting are added by the runtime material. <i>Inspection globes.</i></figcaption>
+      </figure>
+      <figure class="vis">
+        <a class="img" href="visuals/sun.png" target="_blank" rel="noopener"><img src="visuals/sun.png" width="1600" height="1000" alt="The Sun with granulation, sunspots, limb darkening, prominence arches and a streamer corona" loading="lazy"></a>
+        <figcaption><b>The Sun</b>Voronoi granulation with sunspot groups at ±17–26°, limb darkening I(μ)/I(1) = 0.3 + 0.7 μ, and a helmet-streamer corona out to ~3 R<sub>☉</sub> with Hα prominence arches. <i>Photosphere map + transparent corona.</i></figcaption>
+      </figure>
+      <figure class="vis">
+        <a class="img" href="visuals/asset-review.png" target="_blank" rel="noopener"><img src="visuals/asset-review.png" width="1600" height="1200" alt="Asset review sheet: black hole, galaxies, six planets, Sun, warp and debris atlases" loading="lazy"></a>
+        <figcaption><b>Asset review sheet</b>Everything on one sheet: black hole, galaxies, six of the 26 worlds, the Sun, the 8-frame Alcubierre warp atlas and the 16-frame shatter-debris atlas. <i>42 PNGs + 1 movie, all validated.</i></figcaption>
+      </figure>
     </div>
   </div>
 </section>
@@ -554,5 +598,13 @@ SWIFT_ACTIVE_COMPILATION_CONDITIONS: <span class="k">"$(inherited) DUO_SDK"</spa
   </div>
 </footer>
 
+<script>
+  // Screenshots and visuals degrade to their placeholders when a file is missing.
+  document.querySelectorAll('.shot img, .vis img').forEach(function (img) {
+    function drop() { img.remove(); }
+    img.addEventListener('error', drop);
+    if (img.complete && img.naturalWidth === 0) drop();
+  });
+</script>
 </body>
 </html>

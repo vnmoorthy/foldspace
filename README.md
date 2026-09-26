@@ -36,6 +36,8 @@ None of this is possible on a flat iPhone. All of it uses what is unique to iPho
 
 ## Screenshots
 
+*App screenshots are captured via the `FOLDSPACE_DEMO` launch hook (see [Demo states](#demo-states)); they will be added when the build machine's Xcode reinstall completes.*
+
 | Cockpit (phone half-open) | Galaxy map (phone flat) | Outer display (phone closed, warping) |
 |---|---|---|
 | ![Cockpit](docs/screenshots/01-cockpit.png) | ![Galaxy map](docs/screenshots/02-galaxy-map.png) | ![Outer display](docs/screenshots/03-outer-display-warp.png) |
@@ -43,6 +45,24 @@ None of this is possible on a flat iPhone. All of it uses what is unique to iPho
 | Diving into the Sun | Nova Lance (squeeze + snap) | Sagittarius A* slingshot | Andromeda |
 |---|---|---|---|
 | ![Sun dive](docs/screenshots/04-sun-dive.png) | ![Nova Lance](docs/screenshots/05-nova-lance.png) | ![Sagittarius A*](docs/screenshots/06-sagittarius-a.png) | ![Andromeda](docs/screenshots/07-andromeda.png) |
+
+## Visuals
+
+Rendered in Blender 5.2 from the physics brief in [docs/BLENDER-CODEX-BRIEF.md](docs/BLENDER-CODEX-BRIEF.md); pipeline in [`blender/`](blender/) and [`blender/codex/`](blender/codex/). Every image is procedural or computed from equations; the method, assumptions, timings and integration notes are in [`assets/NOTES.md`](assets/NOTES.md), and the files ship in the app bundle from [`assets/`](assets/).
+
+![Sagittarius A*: Schwarzschild-lensed accretion disc with photon ring](docs/visuals/sagittarius-a.png)
+
+**Sagittarius A\*.** Schwarzschild null geodesics (RK4) bend the far side of the disc over and under the shadow; the photon ring sits on the 2.598 r<sub>s</sub> critical curve and Doppler beaming (g⁴) brightens the approaching side, after Luminet 1979 and DNGR (James, von Tunzelmann, Franklin & Thorne 2015). Ships as a 2K still plus a 12 s HEVC-alpha loop.
+
+| Milky Way · Andromeda | 26 worlds |
+|---|---|
+| ![Milky Way and Andromeda](docs/visuals/galaxies.png) | ![26 planet globes](docs/visuals/planets.png) |
+| Density-wave spirals on logarithmic arms (pitch ≈ 15°): four Milky Way arms and a 27 kly bar; M31 with its 10 kpc ring, M32 and M110, at its observed 77° inclination. | 26 procedural 2048 × 1024 equirectangular worlds: zonal bands and the Great Red Spot on the giants, craters and ice on the rocky worlds, lava fissures as emission; Rayleigh atmosphere rims and lighting are added by the runtime material. |
+
+| The Sun | Asset review sheet |
+|---|---|
+| ![The Sun: granulation, limb darkening and corona](docs/visuals/sun.png) | ![Asset review sheet](docs/visuals/asset-review.png) |
+| Voronoi granulation with sunspot groups at ±17–26°, limb darkening I(μ)/I(1) = 0.3 + 0.7 μ, and a helmet-streamer corona out to ~3 R☉ with Hα prominence arches. | Everything on one sheet: black hole, galaxies, six of the 26 worlds, the Sun, the 8-frame Alcubierre warp atlas and the 16-frame shatter-debris atlas. |
 
 ## The phone is the ship
 
@@ -186,7 +206,8 @@ Foldspace/
 ├── Secrets.example.plist   template — copy to Secrets.plist (gitignored)
 └── Info.plist
 supabase/         migrations/ (events table · RLS · galactic_stats view), seed.sql, README (setup + curl)
-docs/             registry.html (live dashboard), landing page, hero, architecture, deck, script, screenshots
+assets/           Blender renders, bundled flat: textures/ (26 planet maps, Sun, Sgr A* still, galaxies), sprites/ (warp, debris), video/ (HEVC-alpha loop), NOTES.md, manifest.json
+docs/             registry.html (live dashboard), landing page, hero, architecture, deck, script, screenshots/, visuals/ (Blender showcase renders)
 ```
 
 ## Run it
