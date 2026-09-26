@@ -5,3 +5,7 @@ xcuserdata/
 .DS_Store
 *.xcworkspace/xcuserdata/
 .swiftpm/
+
+# Secrets (Supabase / OpenAI / Sentry) — never commit
+Foldspace/Secrets.plist
+blender/out/
