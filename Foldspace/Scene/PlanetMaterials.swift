@@ -86,9 +86,25 @@ enum PlanetMaterials {
     static func texture(for body: CelestialBody, size: Int = defaultSize) -> UIImage {
         let key = "\(body.id)#\(size)"
         if let hit = cache.get(key) { return hit }
+        // Prefer a Blender-rendered equirect texture from the bundle when one exists
+        // (assets/textures/planet-<id>.png, sun-photosphere.png — see docs/BLENDER-CODEX-BRIEF.md).
+        if let bundled = bundledTexture(for: body) {
+            cache.set(key, bundled)
+            return bundled
+        }
         let img = render(body, size: max(32, size))
         cache.set(key, img)
         return img
+    }
+
+    /// A hand/Blender-made texture shipped in the app bundle, if any. Names follow the asset contract:
+    /// `planet-<bodyid>.png` for planets and `sun-photosphere.png` for the Sun.
+    static func bundledTexture(for body: CelestialBody) -> UIImage? {
+        let name = body.id == BodyID.sun ? "sun-photosphere" : "planet-\(body.id)"
+        guard let url = Bundle.main.url(forResource: name, withExtension: "png"),
+              let data = try? Data(contentsOf: url),
+              let image = UIImage(data: data) else { return nil }
+        return image
     }
 
     /// Cache lookup that never renders. `SpaceScene` uses it to decide whether to show a placeholder.

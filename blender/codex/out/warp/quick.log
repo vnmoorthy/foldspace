@@ -1,7 +1,0 @@
-/Users/moorthy/Downloads/Projects/Bitrig Hackathon/blender/codex/warp.py:36: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
-  mat.use_nodes = True
-00:02.829  render           | Saved: '/Users/moorthy/Downloads/Projects/Bitrig Hackathon/blender/codex/out/warp/warp-preview.png'
-WARP_COMPLETE mode=quick seconds=1.60
-Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 01:35:57)
-
-Blender quit

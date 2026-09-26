@@ -156,13 +156,15 @@ def shade(m, phase):
     r, az = m['radius'], m['theta']
     t = 2*np.pi*(phase % 1)
     k, f = m['k'], m['frac']
-    def periodic(mode, radial, offset):
-        arg = mode*az+radial*r+offset
-        return (1-f)*np.sin(arg-k*t)+f*np.sin(arg-(k+1)*t)
-    filaments = .26*periodic(7,11,0)+.16*periodic(17,26,2.1)+.075*periodic(37,61,1.3)
-    clouds = .11*periodic(3,2.1,4.2)
+    def turbulence(angle):
+        warp = 2.9*np.sin(11*angle+2.2*r)+1.2*np.sin(23*angle-4.1*r)
+        return (.30*np.sin(7*angle+11*r+warp)
+                +.17*np.sin(17*angle+26*r+warp*1.8)
+                +.09*np.sin(37*angle+61*r+warp*3.1)
+                +.16*np.sin(3*angle+2.1*r+4.2))
+    filaments = (1-f)*turbulence(az-k*t)+f*turbulence(az-(k+1)*t)
     # Fine orbit-following filaments, never a radial spoke/starburst pattern.
-    modulation = np.clip(1+filaments+clouds, .25, 1.8)
+    modulation = np.clip(1+filaments, .25, 1.8)
     flux = m['brightness']*modulation
     rgb = m['color']*flux[...,None]
     alpha = np.where(m['hit'], m['edge'], 0).astype(np.float32)
@@ -213,6 +215,7 @@ def main():
     mode.add_argument('--quick',action='store_true')
     mode.add_argument('--final',action='store_true')
     parser.add_argument('--still-only',action='store_true')
+    parser.add_argument('--resume',action='store_true',help='Keep existing final still and completed movie frames')
     args = parser.parse_args(sys.argv[sys.argv.index('--')+1:])
     start = time.monotonic()
     OUT.mkdir(parents=True,exist_ok=True)
@@ -220,9 +223,11 @@ def main():
     table = geodesics(args.quick)
     size = 256 if args.quick else 2048
     print('Preparing geodesic map', size, flush=True)
-    m = shading_setup(ray_map(size,table))
     filename = OUT/'blackhole-quick.png' if args.quick else ROOT/'assets/textures/blackhole-still.png'
-    save_agx(shade(m,0),filename)
+    map_size = 256 if args.resume and filename.exists() else size
+    m = shading_setup(ray_map(map_size,table))
+    if not (args.resume and filename.exists()):
+        save_agx(shade(m,0),filename)
     timing = {'still_seconds':round(time.monotonic()-start,3)}
     checks = {'null_first_integral_max_relative_error':table[-1], 'shadow_radius_rs':BC,
               'photon_orbit_radius_rs':1.5,'disc_inner_radius_rs':INNER,
@@ -236,6 +241,8 @@ def main():
         m = shading_setup(ray_map(1080,table))
         del table
         for frame in range(360):
+            if args.resume and (frames/f'{frame:04d}.png').exists():
+                continue
             save_agx(shade(m,frame/360),frames/f'{frame:04d}.png')
             if frame % 30 == 0:
                 print(f'Frame {frame}/360; elapsed {time.monotonic()-start:.1f}s',flush=True)

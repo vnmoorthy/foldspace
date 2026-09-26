@@ -114,6 +114,7 @@ def corona(n):
 
 def sphere_preview(surface, halo, path, quick):
     scene = reset(quick)
+    scene.render.film_transparent = False
     scene.render.resolution_x = scene.render.resolution_y = 256 if quick else 768
     si = float_image('Photosphere radiance', surface)
     ci = float_image('Corona radiance', halo)

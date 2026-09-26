@@ -99,13 +99,13 @@ Every planet has a real blurb and real facts in [`UniverseData.swift`](Foldspace
 
 | Duo capability | Where it's used |
 |---|---|
-| `onHingeChange` (hinge status + continuous angle) | [`HingeSourceModifier.swift`](Foldspace/Hinge/HingeSourceModifier.swift) feeds `HingeEngine` |
-| Reserved regions: `.division` (the fold), `.occlusion` (camera) | [`FoldGeometry`](Foldspace/Hinge/HingeSourceModifier.swift) + [`FoldSeam`](Foldspace/UI/Components/FoldSeam.swift): nothing interactive crosses the crease; the probe drag *deliberately* does |
+| `onHingeChange { old, new in … }` → `DeviceHingeContext.hinge: DeviceHinge?` with `angle: Angle` and `status: .closed / .partiallyOpen / .fullyOpen` (iOS 27.1) | [`HingeSourceModifier.swift`](Foldspace/Hinge/HingeSourceModifier.swift) feeds `hinge.angle.degrees` into `HingeEngine`. Per Apple's guidance the angle drives *interactions and effects*, never layout |
+| Reserved regions: `proxy.reservedRegions(kind: .division)` (the fold) and `.occlusion` (camera) | [`FoldGeometry.seamRect(in:proxy:)`](Foldspace/Hinge/HingeSourceModifier.swift) + [`FoldSeam`](Foldspace/UI/Components/FoldSeam.swift): nothing interactive crosses the crease; the probe drag *deliberately* does |
 | Outer display ↔ inner display continuity | [`OuterDisplayView`](Foldspace/UI/Outer/OuterDisplayView.swift) shows transit while closed; the cockpit resumes on open |
 | Size classes instead of orientation locks | [`RootView`](Foldspace/App/RootView.swift), [`CockpitView`](Foldspace/UI/Cockpit/CockpitView.swift) split at the fold, never at a fixed pixel |
 | Split View / multiple windows | `UIApplicationSupportsMultipleScenes` is on; the galaxy map is a fine second window |
 
-**Build-flag note.** Xcode 27.1 beta (the first SDK with the Duo APIs) requires macOS 26.6+; the build machine at the hackathon was on 26.5. The native hinge path is behind the `DUO_SDK` compilation condition in `project.yml` and `HingeSourceModifier.swift`, so the same engine runs from three sources: the Duo hinge, an on-screen hinge control in the simulator, or CoreMotion tilt on a flat iPhone. Flip the flag on Xcode 27.1 and the Duo simulator drives the game directly.
+**Build-flag note.** Xcode 27.1 beta (the first SDK with the Duo APIs) requires macOS 26.6+; the build machine at the hackathon was on 26.5. The native hinge path is behind the `DUO_SDK` compilation condition in `project.yml` and `HingeSourceModifier.swift`, so the same engine runs from three sources: the Duo hinge, an on-screen hinge control in the simulator, or CoreMotion tilt on a flat iPhone. Flip the flag on Xcode 27.1 and the Duo simulator drives the game directly. The [Bitrig](https://bitrig.com) Mac app's photorealistic iPhone Duo simulator (folding + rotation) can also run the generated Xcode project.
 
 ## Sponsor stack: Supabase · OpenAI · Sentry
 

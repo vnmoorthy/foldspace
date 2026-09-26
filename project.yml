@@ -28,6 +28,11 @@ targets:
       # Everything under Foldspace/, including Secrets.example.plist and (if present) the gitignored
       # Secrets.plist, which XcodeGen bundles as resources. Re-run `xcodegen generate` after creating it.
       - path: Foldspace
+      # Optional Blender-rendered assets (see docs/BLENDER-CODEX-BRIEF.md). When present, the
+      # bundle contains planet-<id>.png etc. and PlanetMaterials prefers them over procedural textures.
+      - path: assets
+        optional: true
+        buildPhase: resources
     dependencies:
       - package: Sentry
         product: Sentry

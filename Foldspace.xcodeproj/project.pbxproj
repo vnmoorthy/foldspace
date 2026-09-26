@@ -7,24 +7,151 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01EB87B3A9092FCB845E8D21 /* blackhole-still.png in Resources */ = {isa = PBXBuildFile; fileRef = 47E455B1053996826854D6A1 /* blackhole-still.png */; };
 		07A759FB656B7917D2AFE08B /* GameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EADC5109ECBC955CED778C79 /* GameStore.swift */; };
+		08E632C9A688BC3BFFE6D826 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = E92B045CFA3D7064332E5618 /* Sentry */; };
+		0D1CE61D73C68E014F6842AE /* FlightController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8433536A5CC3F0494B8B4256 /* FlightController.swift */; };
+		0D681493F759DFC4F716A382 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0426E21FDCE96BC78DD589EF /* Haptics.swift */; };
+		14AB98F1D31326B4DC0BAE62 /* PlanetMaterials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7744E30328FD9D2941C249AC /* PlanetMaterials.swift */; };
+		1B523452B44EC5E2A6C3BFC5 /* AndromedaFinaleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F06BC8DC9533D163914B4AD7 /* AndromedaFinaleView.swift */; };
+		1E049051BE2AD0A85085710C /* ShipLostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05BF379514135A4F292B1C35 /* ShipLostView.swift */; };
+		232ED6FB9CD349DEE8E0DFA3 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F222B8BD99BF60190D41DF /* Theme.swift */; };
+		36D5EBA8C1CF69BFEC6D801C /* WarpSequenceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 963417BFE19F12AE5964B6C7 /* WarpSequenceView.swift */; };
 		37ED5D794E165406F2348C4B /* HingeState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB8CD7D3A25BBD98429E7CF /* HingeState.swift */; };
+		382B51547FB9224A8ABAB085 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01ED5F60069F636574ECBCE1 /* RootView.swift */; };
+		428C977909A5B334EE663FA7 /* GalaxyMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 401803EDFE814D5526EA9E29 /* GalaxyMapView.swift */; };
+		44CF7E3E663D7F69836CC332 /* notes-sun.md in Resources */ = {isa = PBXBuildFile; fileRef = 78C76F18FBCA1EE9486C8874 /* notes-sun.md */; };
+		4A05445D1456008570D8E388 /* notes-blackhole.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DDC7672A25AB31F71928EAD /* notes-blackhole.md */; };
 		607A4344682CB614EC94CB50 /* HingeSourceModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 096985700CFFE204AF4953CD /* HingeSourceModifier.swift */; };
+		7007B5713F99B1CFD45F05BA /* Secrets.example.plist in Resources */ = {isa = PBXBuildFile; fileRef = B8EFC8A2C089523875015A4B /* Secrets.example.plist */; };
+		761800A6A0BA11F64AF69CBF /* HUDOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1C8EBBFD2B4CC3C1CD7450 /* HUDOverlay.swift */; };
+		7E5C0A9778934DC8A810200D /* BlackHoleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB2EC3721220224A9E2675CD /* BlackHoleView.swift */; };
 		7EF0C8C75AC69742E4D201C5 /* HingeEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A92A0E8BD4E058460F4DBD76 /* HingeEngine.swift */; };
+		80443B9A90854BDC0F97362A /* SpaceScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = A70E09844B1082AD87D44E99 /* SpaceScene.swift */; };
+		908E24A28CEBA6F22A19F522 /* WeaponView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9ACA3035130CD295D06B463 /* WeaponView.swift */; };
+		9A70DF68F12A992E224F96F8 /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A007DEA61AE55F97F32D881 /* Secrets.swift */; };
+		9D48D5B82A42D94174834DC7 /* OuterDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6D1ADBFC621F870FDFDCED /* OuterDisplayView.swift */; };
+		9F04191FDF184763AB52A812 /* CockpitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87594E07A886AC08E92D670F /* CockpitView.swift */; };
+		9FB585F6CCCFFA7955FF9DA9 /* SceneViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 884284B9A3A88F19FAB5E2F5 /* SceneViewport.swift */; };
+		A00B5D14FA1C2102BDE0B142 /* ShipComputer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E87FCA4D22C421547246ED8 /* ShipComputer.swift */; };
+		A5AD0864462EC34720634C57 /* UniverseData.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED05CEE1A9AAD130641948C7 /* UniverseData.swift */; };
+		AA04EC914EBED8A3675E8D6D /* GalacticRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95E4938426A61BCE09F9C473 /* GalacticRegistry.swift */; };
+		B22449C0CB0BB381D83420D8 /* SunDiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B73648459FB2DC15BC883FD /* SunDiveView.swift */; };
+		B7167C4E7B39B9397D6647E0 /* FoldspaceApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17D66A05E348DDCFC6E50674 /* FoldspaceApp.swift */; };
+		BC72FCD1D75C9E1CBDF1AF94 /* Telemetry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831233F0ACB3BD473506183A /* Telemetry.swift */; };
 		D0AEF346D67DBBA58095B195 /* Universe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B756CA34A4A7AE8C8D0FE62 /* Universe.swift */; };
+		D76161B58D6316812C3354C3 /* FoldSeam.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AFA414D6D581F525F7604D8 /* FoldSeam.swift */; };
+		E41DCADA39E0A9E3D4A25AF6 /* ConsoleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 621BD62F2B9F0425D39C7B23 /* ConsoleView.swift */; };
+		EA114C1150B1F85402483E7E /* notes-galaxies.md in Resources */ = {isa = PBXBuildFile; fileRef = 65853F33AAAC786CFE89172D /* notes-galaxies.md */; };
+		F5D2B9A51E3E248E93AA6BD4 /* notes-sprites.md in Resources */ = {isa = PBXBuildFile; fileRef = 9FB90BCBDBB919831EF3EA55 /* notes-sprites.md */; };
+		FCA7FB9EA68636BAB6F7DE7F /* HingeSimulatorControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = D81AC6C10EBEA016A3DF70EC /* HingeSimulatorControl.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		01ED5F60069F636574ECBCE1 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		0426E21FDCE96BC78DD589EF /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
+		05BF379514135A4F292B1C35 /* ShipLostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShipLostView.swift; sourceTree = "<group>"; };
 		096985700CFFE204AF4953CD /* HingeSourceModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HingeSourceModifier.swift; sourceTree = "<group>"; };
+		11F222B8BD99BF60190D41DF /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		17D66A05E348DDCFC6E50674 /* FoldspaceApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoldspaceApp.swift; sourceTree = "<group>"; };
 		2A9802CDBFBDD05FF125A1CE /* Foldspace.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Foldspace.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2AB8CD7D3A25BBD98429E7CF /* HingeState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HingeState.swift; sourceTree = "<group>"; };
+		2D6D1ADBFC621F870FDFDCED /* OuterDisplayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OuterDisplayView.swift; sourceTree = "<group>"; };
+		2E87FCA4D22C421547246ED8 /* ShipComputer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShipComputer.swift; sourceTree = "<group>"; };
+		401803EDFE814D5526EA9E29 /* GalaxyMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalaxyMapView.swift; sourceTree = "<group>"; };
+		47E455B1053996826854D6A1 /* blackhole-still.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "blackhole-still.png"; sourceTree = "<group>"; };
 		517A68287149AECDEFD5A081 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		621BD62F2B9F0425D39C7B23 /* ConsoleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsoleView.swift; sourceTree = "<group>"; };
+		65853F33AAAC786CFE89172D /* notes-galaxies.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "notes-galaxies.md"; sourceTree = "<group>"; };
+		6A007DEA61AE55F97F32D881 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
+		6B73648459FB2DC15BC883FD /* SunDiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SunDiveView.swift; sourceTree = "<group>"; };
+		6DDC7672A25AB31F71928EAD /* notes-blackhole.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "notes-blackhole.md"; sourceTree = "<group>"; };
+		7744E30328FD9D2941C249AC /* PlanetMaterials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanetMaterials.swift; sourceTree = "<group>"; };
+		78C76F18FBCA1EE9486C8874 /* notes-sun.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "notes-sun.md"; sourceTree = "<group>"; };
+		831233F0ACB3BD473506183A /* Telemetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Telemetry.swift; sourceTree = "<group>"; };
+		8433536A5CC3F0494B8B4256 /* FlightController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightController.swift; sourceTree = "<group>"; };
+		87594E07A886AC08E92D670F /* CockpitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CockpitView.swift; sourceTree = "<group>"; };
+		884284B9A3A88F19FAB5E2F5 /* SceneViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneViewport.swift; sourceTree = "<group>"; };
+		8AFA414D6D581F525F7604D8 /* FoldSeam.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoldSeam.swift; sourceTree = "<group>"; };
 		8B756CA34A4A7AE8C8D0FE62 /* Universe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Universe.swift; sourceTree = "<group>"; };
+		95E4938426A61BCE09F9C473 /* GalacticRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalacticRegistry.swift; sourceTree = "<group>"; };
+		963417BFE19F12AE5964B6C7 /* WarpSequenceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarpSequenceView.swift; sourceTree = "<group>"; };
+		9FB90BCBDBB919831EF3EA55 /* notes-sprites.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "notes-sprites.md"; sourceTree = "<group>"; };
+		A70E09844B1082AD87D44E99 /* SpaceScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceScene.swift; sourceTree = "<group>"; };
 		A92A0E8BD4E058460F4DBD76 /* HingeEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HingeEngine.swift; sourceTree = "<group>"; };
+		B8EFC8A2C089523875015A4B /* Secrets.example.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Secrets.example.plist; sourceTree = "<group>"; };
+		D81AC6C10EBEA016A3DF70EC /* HingeSimulatorControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HingeSimulatorControl.swift; sourceTree = "<group>"; };
+		E9ACA3035130CD295D06B463 /* WeaponView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeaponView.swift; sourceTree = "<group>"; };
 		EADC5109ECBC955CED778C79 /* GameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStore.swift; sourceTree = "<group>"; };
+		EB2EC3721220224A9E2675CD /* BlackHoleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlackHoleView.swift; sourceTree = "<group>"; };
+		ED05CEE1A9AAD130641948C7 /* UniverseData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UniverseData.swift; sourceTree = "<group>"; };
+		EE1C8EBBFD2B4CC3C1CD7450 /* HUDOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HUDOverlay.swift; sourceTree = "<group>"; };
+		F06BC8DC9533D163914B4AD7 /* AndromedaFinaleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AndromedaFinaleView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFrameworksBuildPhase section */
+		7B29C47D35CD113BFFA12B72 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				08E632C9A688BC3BFFE6D826 /* Sentry in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
 /* Begin PBXGroup section */
+		03A0BD151655FE2897E514CE /* GalaxyMap */ = {
+			isa = PBXGroup;
+			children = (
+				401803EDFE814D5526EA9E29 /* GalaxyMapView.swift */,
+			);
+			path = GalaxyMap;
+			sourceTree = "<group>";
+		};
+		073FAA6E65955CEE0CDA592A /* Sequences */ = {
+			isa = PBXGroup;
+			children = (
+				F06BC8DC9533D163914B4AD7 /* AndromedaFinaleView.swift */,
+				EB2EC3721220224A9E2675CD /* BlackHoleView.swift */,
+				05BF379514135A4F292B1C35 /* ShipLostView.swift */,
+				6B73648459FB2DC15BC883FD /* SunDiveView.swift */,
+				963417BFE19F12AE5964B6C7 /* WarpSequenceView.swift */,
+				E9ACA3035130CD295D06B463 /* WeaponView.swift */,
+			);
+			path = Sequences;
+			sourceTree = "<group>";
+		};
+		0E031D8B902F961267BD2656 /* AI */ = {
+			isa = PBXGroup;
+			children = (
+				2E87FCA4D22C421547246ED8 /* ShipComputer.swift */,
+			);
+			path = AI;
+			sourceTree = "<group>";
+		};
+		1F38A0A2D2672D6178143E1D /* Outer */ = {
+			isa = PBXGroup;
+			children = (
+				2D6D1ADBFC621F870FDFDCED /* OuterDisplayView.swift */,
+			);
+			path = Outer;
+			sourceTree = "<group>";
+		};
+		2B69170B0C0350EB8856972E /* assets */ = {
+			isa = PBXGroup;
+			children = (
+				6DDC7672A25AB31F71928EAD /* notes-blackhole.md */,
+				65853F33AAAC786CFE89172D /* notes-galaxies.md */,
+				9FB90BCBDBB919831EF3EA55 /* notes-sprites.md */,
+				78C76F18FBCA1EE9486C8874 /* notes-sun.md */,
+				5BD90DDB679257F3D75DED24 /* sprites */,
+				F8EA2807FF1E0526C946650F /* textures */,
+				B0728D08AB1130E9ED1B9BA5 /* video */,
+			);
+			path = assets;
+			sourceTree = "<group>";
+		};
 		3CD8DAA374F1FE47E5861781 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -36,15 +163,44 @@
 		42A22A564AC258FD91127339 = {
 			isa = PBXGroup;
 			children = (
+				2B69170B0C0350EB8856972E /* assets */,
 				DD93BA3BF296945C687EACEB /* Foldspace */,
 				3CD8DAA374F1FE47E5861781 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		4C3320D3F3F7CC4B6CD247DE /* Cockpit */ = {
+			isa = PBXGroup;
+			children = (
+				87594E07A886AC08E92D670F /* CockpitView.swift */,
+				621BD62F2B9F0425D39C7B23 /* ConsoleView.swift */,
+				EE1C8EBBFD2B4CC3C1CD7450 /* HUDOverlay.swift */,
+			);
+			path = Cockpit;
+			sourceTree = "<group>";
+		};
+		5BD90DDB679257F3D75DED24 /* sprites */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = sprites;
+			sourceTree = "<group>";
+		};
+		67148E1AF03109F057E81C1D /* Scene */ = {
+			isa = PBXGroup;
+			children = (
+				7744E30328FD9D2941C249AC /* PlanetMaterials.swift */,
+				884284B9A3A88F19FAB5E2F5 /* SceneViewport.swift */,
+				A70E09844B1082AD87D44E99 /* SpaceScene.swift */,
+			);
+			path = Scene;
 			sourceTree = "<group>";
 		};
 		8F014023817CC6878AA18C1D /* Hinge */ = {
 			isa = PBXGroup;
 			children = (
 				A92A0E8BD4E058460F4DBD76 /* HingeEngine.swift */,
+				D81AC6C10EBEA016A3DF70EC /* HingeSimulatorControl.swift */,
 				096985700CFFE204AF4953CD /* HingeSourceModifier.swift */,
 				2AB8CD7D3A25BBD98429E7CF /* HingeState.swift */,
 			);
@@ -55,27 +211,99 @@
 			isa = PBXGroup;
 			children = (
 				8B756CA34A4A7AE8C8D0FE62 /* Universe.swift */,
+				ED05CEE1A9AAD130641948C7 /* UniverseData.swift */,
 			);
 			path = Universe;
+			sourceTree = "<group>";
+		};
+		B0728D08AB1130E9ED1B9BA5 /* video */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = video;
 			sourceTree = "<group>";
 		};
 		B6DF6E46C2040B895D021712 /* Game */ = {
 			isa = PBXGroup;
 			children = (
+				8433536A5CC3F0494B8B4256 /* FlightController.swift */,
 				EADC5109ECBC955CED778C79 /* GameStore.swift */,
 			);
 			path = Game;
+			sourceTree = "<group>";
+		};
+		B728E7284B9047AC54437EF4 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				95E4938426A61BCE09F9C473 /* GalacticRegistry.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
+		B9861CD2614255BE7CB26E66 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				6A007DEA61AE55F97F32D881 /* Secrets.swift */,
+				831233F0ACB3BD473506183A /* Telemetry.swift */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		C16760EEFD87BECD797B7979 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				17D66A05E348DDCFC6E50674 /* FoldspaceApp.swift */,
+				01ED5F60069F636574ECBCE1 /* RootView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		D26D7A6BCCCB7A0B4D6D65A9 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				8AFA414D6D581F525F7604D8 /* FoldSeam.swift */,
+				0426E21FDCE96BC78DD589EF /* Haptics.swift */,
+				11F222B8BD99BF60190D41DF /* Theme.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 		DD93BA3BF296945C687EACEB /* Foldspace */ = {
 			isa = PBXGroup;
 			children = (
 				517A68287149AECDEFD5A081 /* Info.plist */,
+				B8EFC8A2C089523875015A4B /* Secrets.example.plist */,
+				0E031D8B902F961267BD2656 /* AI */,
+				C16760EEFD87BECD797B7979 /* App */,
+				B9861CD2614255BE7CB26E66 /* Config */,
 				B6DF6E46C2040B895D021712 /* Game */,
 				8F014023817CC6878AA18C1D /* Hinge */,
+				B728E7284B9047AC54437EF4 /* Network */,
+				67148E1AF03109F057E81C1D /* Scene */,
+				F676500EB71FE3A41A3C1D39 /* UI */,
 				90085C4EDE235C00251B432B /* Universe */,
 			);
 			path = Foldspace;
+			sourceTree = "<group>";
+		};
+		F676500EB71FE3A41A3C1D39 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				4C3320D3F3F7CC4B6CD247DE /* Cockpit */,
+				D26D7A6BCCCB7A0B4D6D65A9 /* Components */,
+				03A0BD151655FE2897E514CE /* GalaxyMap */,
+				1F38A0A2D2672D6178143E1D /* Outer */,
+				073FAA6E65955CEE0CDA592A /* Sequences */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		F8EA2807FF1E0526C946650F /* textures */ = {
+			isa = PBXGroup;
+			children = (
+				47E455B1053996826854D6A1 /* blackhole-still.png */,
+			);
+			path = textures;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -86,6 +314,8 @@
 			buildConfigurationList = 492AE717F6A31C1FF6CB540A /* Build configuration list for PBXNativeTarget "Foldspace" */;
 			buildPhases = (
 				7610BBE604F10312E4EC7780 /* Sources */,
+				482E1CF1CFBA754375426A5F /* Resources */,
+				7B29C47D35CD113BFFA12B72 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -93,6 +323,7 @@
 			);
 			name = Foldspace;
 			packageProductDependencies = (
+				E92B045CFA3D7064332E5618 /* Sentry */,
 			);
 			productName = Foldspace;
 			productReference = 2A9802CDBFBDD05FF125A1CE /* Foldspace.app */;
@@ -121,6 +352,9 @@
 			);
 			mainGroup = 42A22A564AC258FD91127339;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B2F81006E9B6BB2B44A81948 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3CD8DAA374F1FE47E5861781 /* Products */;
 			projectDirPath = "";
@@ -131,16 +365,58 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		482E1CF1CFBA754375426A5F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7007B5713F99B1CFD45F05BA /* Secrets.example.plist in Resources */,
+				01EB87B3A9092FCB845E8D21 /* blackhole-still.png in Resources */,
+				4A05445D1456008570D8E388 /* notes-blackhole.md in Resources */,
+				EA114C1150B1F85402483E7E /* notes-galaxies.md in Resources */,
+				F5D2B9A51E3E248E93AA6BD4 /* notes-sprites.md in Resources */,
+				44CF7E3E663D7F69836CC332 /* notes-sun.md in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		7610BBE604F10312E4EC7780 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1B523452B44EC5E2A6C3BFC5 /* AndromedaFinaleView.swift in Sources */,
+				7E5C0A9778934DC8A810200D /* BlackHoleView.swift in Sources */,
+				9F04191FDF184763AB52A812 /* CockpitView.swift in Sources */,
+				E41DCADA39E0A9E3D4A25AF6 /* ConsoleView.swift in Sources */,
+				0D1CE61D73C68E014F6842AE /* FlightController.swift in Sources */,
+				D76161B58D6316812C3354C3 /* FoldSeam.swift in Sources */,
+				B7167C4E7B39B9397D6647E0 /* FoldspaceApp.swift in Sources */,
+				AA04EC914EBED8A3675E8D6D /* GalacticRegistry.swift in Sources */,
+				428C977909A5B334EE663FA7 /* GalaxyMapView.swift in Sources */,
 				07A759FB656B7917D2AFE08B /* GameStore.swift in Sources */,
+				761800A6A0BA11F64AF69CBF /* HUDOverlay.swift in Sources */,
+				0D681493F759DFC4F716A382 /* Haptics.swift in Sources */,
 				7EF0C8C75AC69742E4D201C5 /* HingeEngine.swift in Sources */,
+				FCA7FB9EA68636BAB6F7DE7F /* HingeSimulatorControl.swift in Sources */,
 				607A4344682CB614EC94CB50 /* HingeSourceModifier.swift in Sources */,
 				37ED5D794E165406F2348C4B /* HingeState.swift in Sources */,
+				9D48D5B82A42D94174834DC7 /* OuterDisplayView.swift in Sources */,
+				14AB98F1D31326B4DC0BAE62 /* PlanetMaterials.swift in Sources */,
+				382B51547FB9224A8ABAB085 /* RootView.swift in Sources */,
+				9FB585F6CCCFFA7955FF9DA9 /* SceneViewport.swift in Sources */,
+				9A70DF68F12A992E224F96F8 /* Secrets.swift in Sources */,
+				A00B5D14FA1C2102BDE0B142 /* ShipComputer.swift in Sources */,
+				1E049051BE2AD0A85085710C /* ShipLostView.swift in Sources */,
+				80443B9A90854BDC0F97362A /* SpaceScene.swift in Sources */,
+				B22449C0CB0BB381D83420D8 /* SunDiveView.swift in Sources */,
+				BC72FCD1D75C9E1CBDF1AF94 /* Telemetry.swift in Sources */,
+				232ED6FB9CD349DEE8E0DFA3 /* Theme.swift in Sources */,
 				D0AEF346D67DBBA58095B195 /* Universe.swift in Sources */,
+				A5AD0864462EC34720634C57 /* UniverseData.swift in Sources */,
+				36D5EBA8C1CF69BFEC6D801C /* WarpSequenceView.swift in Sources */,
+				908E24A28CEBA6F22A19F522 /* WeaponView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -333,6 +609,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B2F81006E9B6BB2B44A81948 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E92B045CFA3D7064332E5618 /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B2F81006E9B6BB2B44A81948 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 32947DCE2382807D4662B0E7 /* Project object */;
 }

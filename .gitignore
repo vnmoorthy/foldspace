@@ -9,3 +9,5 @@ xcuserdata/
 # Secrets (Supabase / OpenAI / Sentry) — never commit
 Foldspace/Secrets.plist
 blender/out/
+blender/codex/out/
+blender/codex/__pycache__/

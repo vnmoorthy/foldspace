@@ -14,7 +14,7 @@ START = time.perf_counter()
 OUT = os.path.join(ROOT, 'blender/codex/out/warp')
 os.makedirs(OUT, exist_ok=True)
 os.makedirs(os.path.join(ROOT, 'assets/sprites'), exist_ok=True)
-R, SIGMA, VELOCITY = 1.05, 5.5, 0.30
+R, SIGMA, VELOCITY = 1.05, 5.5, 0.46
 
 def york(x, y, envelope):
     r = math.hypot(x, y)
@@ -26,7 +26,7 @@ def york(x, y, envelope):
 def rgba(z):
     # Exactly zero is neutral ice-white; signed York time selects its hue.
     t = min(1.0, abs(z) / 0.27)
-    neutral = np.array([0.26, 0.66, 0.83])
+    neutral = np.array([0.025, 0.19, 0.28])
     col = np.array([1.0, .095, .033]) if z > 0 else np.array([.025, .24, 1.0])
     rgb = neutral * (1 - t) + col * t
     return (*rgb, 1)
@@ -35,16 +35,20 @@ def material(name, emission, alpha=1):
     mat = bpy.data.materials.new(name)
     mat.use_nodes = True
     nodes = mat.node_tree.nodes
-    bsdf = nodes.get('Principled BSDF')
+    nodes.clear()
     attr = nodes.new('ShaderNodeVertexColor'); attr.layer_name = 'YorkColor'
-    mat.node_tree.links.new(attr.outputs['Color'], bsdf.inputs['Base Color'])
-    mat.node_tree.links.new(attr.outputs['Color'], bsdf.inputs['Emission Color'])
-    bsdf.inputs['Emission Strength'].default_value = emission
-    bsdf.inputs['Roughness'].default_value = .35
-    bsdf.inputs['Metallic'].default_value = .18
-    bsdf.inputs['Alpha'].default_value = alpha
+    shader = nodes.new('ShaderNodeEmission')
+    shader.inputs['Strength'].default_value = emission
+    mat.node_tree.links.new(attr.outputs['Color'], shader.inputs['Color'])
+    output = nodes.new('ShaderNodeOutputMaterial')
     if alpha < 1:
-        mat.surface_render_method = 'DITHERED'
+        transparent = nodes.new('ShaderNodeBsdfTransparent')
+        mix = nodes.new('ShaderNodeMixShader'); mix.inputs[0].default_value = alpha
+        mat.node_tree.links.new(transparent.outputs[0], mix.inputs[1])
+        mat.node_tree.links.new(shader.outputs[0], mix.inputs[2])
+        mat.node_tree.links.new(mix.outputs[0], output.inputs['Surface'])
+    else:
+        mat.node_tree.links.new(shader.outputs[0], output.inputs['Surface'])
     return mat
 
 def colored_mesh(name, verts, faces, colors, mat):
@@ -60,8 +64,10 @@ def colored_mesh(name, verts, faces, colors, mat):
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
 scene = bpy.context.scene
 scene.render.engine = 'CYCLES'
-scene.cycles.samples = 8 if QUICK else 24
+scene.cycles.samples = 32 if QUICK else 64
 scene.cycles.use_denoising = True
+scene.cycles.seed = 0
+scene.cycles.use_animated_seed = False
 scene.render.threads_mode = 'FIXED'; scene.render.threads = 3
 scene.render.resolution_x = scene.render.resolution_y = 256 if QUICK else 512
 scene.render.resolution_percentage = 100
@@ -71,17 +77,17 @@ scene.render.image_settings.color_depth = '8'
 scene.view_settings.view_transform = 'AgX'
 scene.view_settings.look = 'AgX - Medium High Contrast'
 scene.world.color = (.045, .045, .045)
-bpy.ops.object.camera_add(location=(3.0, -6.7, 5.6))
+bpy.ops.object.camera_add(location=(3.0, -6.7, 4.3))
 cam = bpy.context.object; cam.name = 'York camera'
 cam.rotation_euler = (Vector((0,0,0)) - cam.location).to_track_quat('-Z','Y').to_euler()
 cam.data.type='ORTHO'; cam.data.ortho_scale=5.5
 scene.camera=cam
 bpy.ops.object.light_add(type='AREA', location=(1,-3,6))
 bpy.context.object.data.energy = 500; bpy.context.object.data.shape='DISK'; bpy.context.object.data.size=5
-surf_mat = material('Soft signed spacetime surface', .16, .14)
+surf_mat = material('Soft signed spacetime surface', .4, .12)
 line_mat = material('Signed coordinate grid', 1.8)
 
-# Surface alpha diminishes at outer boundary so the atlas composites softly.
+# Sample the finite coordinate patch and color it by signed York time.
 def make_frame(envelope):
     for ob in list(bpy.data.objects):
         if ob.type == 'MESH':
