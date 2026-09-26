@@ -20,6 +20,7 @@ struct SunDiveView: View {
     private static let topAngle: Double = 120   // depth 0
     private static let coreAngle: Double = 12   // depth 1
     private static let climbOutAngle: Double = 130
+    private static let photosphere = VisualAssets.image(named: "sun-photosphere")
 
     static func depth(forAngle angle: Double) -> Double {
         max(0, min(1, (topAngle - angle) / (topAngle - coreAngle)))
@@ -252,6 +253,21 @@ struct SunDiveView: View {
         let bgColor = Color(red: bg.0, green: bg.1, blue: bg.2)
         context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(bgColor))
 
+        // A close surface patch fades in around the photosphere, then gives way to the interior.
+        let surfaceAlpha = Self.photosphere == nil ? 0 : (1 - abs(depth - 0.25) / 0.32).clamped01()
+        if let image = Self.photosphere, surfaceAlpha > 0 {
+            var surface = context
+            surface.blendMode = .normal
+            surface.opacity = surfaceAlpha
+            let imageHeight = max(size.height * (1.25 + depth * 0.35), size.width * 0.55)
+            let imageWidth = imageHeight * 2
+            let drift = CGFloat(sin(t * 0.05)) * imageWidth * 0.025
+            surface.draw(Image(uiImage: image),
+                         in: CGRect(x: (size.width - imageWidth) / 2 + drift,
+                                    y: (size.height - imageHeight) / 2,
+                                    width: imageWidth, height: imageHeight))
+        }
+
         // Inner brightness: a hot centre that whitens with depth.
         let centre = CGPoint(x: size.width / 2, y: size.height / 2)
         context.fill(Path(CGRect(origin: .zero, size: size)), with: .radialGradient(
@@ -263,7 +279,7 @@ struct SunDiveView: View {
         let cols = Int(size.width / cell) + 1
         let rows = Int(size.height / cell) + 1
         let frame = Int(t * 6)
-        let granAlpha = 0.05 + 0.10 * (1 - abs(depth - 0.3) * 2).clamped01()
+        let granAlpha = (0.05 + 0.10 * (1 - abs(depth - 0.3) * 2).clamped01()) * (1 - surfaceAlpha)
         for r in 0..<rows {
             for c in 0..<cols {
                 let n = sunHash(c + r * 97, frame + (c ^ r) % 3)

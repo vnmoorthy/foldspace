@@ -75,29 +75,29 @@ struct FoldspaceApp: App {
             try? await Task.sleep(nanoseconds: 400_000_000)
             switch demo {
             case "cockpit":
-                store.demoSkip(.warp)
+                store.demoSkip(to: .warp)
                 hinge.ingest(angle: 110)
             case "galaxy":
-                store.demoSkip(.warp)
+                store.demoSkip(to: .warp)
                 store.targetSystemID = SystemID.trappist1
                 hinge.ingest(angle: 180)
             case "outer":
-                store.demoSkip(.warp)
+                store.demoSkip(to: .warp)
                 hinge.ingest(angle: 0)
             case "warp":
-                store.demoSkip(.warp)
+                store.demoSkip(to: .warp)
                 store.targetSystemID = SystemID.alphaCentauri
                 hinge.ingest(angle: 0)
                 store.beginWarp(quality: 1)
             case "sun":
-                store.demoSkip(.warp)
+                store.demoSkip(to: .warp)
                 store.save.systemID = SystemID.sol
                 store.save.bodyID = BodyID.earth
                 hinge.ingest(angle: 110)
                 store.beginSunDive()
                 hinge.ingest(angle: 40)
             case "weapon":
-                store.demoSkip(.core)
+                store.demoSkip(to: .core)
                 store.save.systemID = SystemID.sol
                 store.save.bodyID = BodyID.earth
                 store.phase = .orbit
@@ -106,11 +106,11 @@ struct FoldspaceApp: App {
                 store.weaponCharge = 0.8
                 hinge.ingest(angle: 25)
             case "blackhole":
-                store.demoSkip(.core)
+                store.demoSkip(to: .core)
                 hinge.ingest(angle: 110)
                 store.phase = .blackHole
             case "andromeda":
-                store.demoSkip(.core)
+                store.demoSkip(to: .core)
                 store.save.reachedAndromeda = true
                 hinge.ingest(angle: 110)
                 store.phase = .andromeda

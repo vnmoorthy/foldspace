@@ -8,6 +8,10 @@ struct WarpSequenceView: View {
     @Environment(GameStore.self) private var store
     @Environment(HingeEngine.self) private var hinge
 
+    private static let bubbleFrames = VisualAssets.frames(named: "warp-bubble-8x1", columns: 8, rows: 1)
+    private static let milkyWay = VisualAssets.image(named: "galaxy-milkyway")
+    private static let andromeda = VisualAssets.image(named: "galaxy-andromeda")
+
     private enum Mode { case hop, warp, intergalactic, idle }
 
     private var mode: Mode {
@@ -195,6 +199,20 @@ struct WarpSequenceView: View {
             Gradient(colors: [.clear, seamColor.opacity(0.25 + 0.35 * intensity), Color.white.opacity(0.4 + 0.5 * intensity), seamColor.opacity(0.25 + 0.35 * intensity), .clear]),
             startPoint: CGPoint(x: 0, y: band.minY), endPoint: CGPoint(x: 0, y: band.maxY)))
 
+        // Eight cached crops: flat → contracted/expanded wall → flat.
+        if mode != .hop, Self.bubbleFrames.count == 8 {
+            let frame = min(7, Int(max(0, min(1, progress)) * 8))
+            let side = min(size.width * 0.92, size.height * 0.72)
+            var bubble = context
+            bubble.blendMode = .normal
+            bubble.opacity = collapsing ? 0.65 : 0.9
+            bubble.translateBy(x: size.width / 2 + (collapsing ? CGFloat(sin(t * 23) * 5) : 0), y: seamY)
+            // The rendered +x arrow is 13° down from screen-right; point it into the upper fold.
+            bubble.rotate(by: .degrees(-103))
+            bubble.draw(Image(uiImage: Self.bubbleFrames[frame]),
+                        in: CGRect(x: -side / 2, y: -side / 2, width: side, height: side))
+        }
+
         // Light streaks converging on the seam from both halves.
         context.blendMode = .plusLighter
         let count = 40 + Int(140 * intensity)
@@ -260,21 +278,34 @@ struct WarpSequenceView: View {
         let centre = CGPoint(x: size.width / 2, y: size.height * (0.62 + 0.28 * p))
         let radius = size.width * 0.42 * scale
         drawSpiral(context: &context, centre: centre, radius: radius, rotation: t * 0.15, tilt: 0.38,
-                   core: Color(red: 1, green: 0.9, blue: 0.7), arm: Color(red: 0.7, green: 0.8, blue: 1), alpha: 0.9 - 0.5 * p)
+                   core: Color(red: 1, green: 0.9, blue: 0.7), arm: Color(red: 0.7, green: 0.8, blue: 1), alpha: 0.9 - 0.5 * p,
+                   image: Self.milkyWay)
 
         // Andromeda: grows from a dot above the seam.
         let a = max(0, (progress - 0.35) / 0.65)
         if a > 0 {
             let ar = size.width * 0.05 + size.width * 0.34 * warpEaseOut(a)
             let ac = CGPoint(x: size.width / 2, y: size.height * (0.28 - 0.08 * a))
-            drawSpiral(context: &context, centre: ac, radius: ar, rotation: -t * 0.12, tilt: 0.45,
-                       core: Color(red: 1, green: 0.92, blue: 0.8), arm: Color(red: 0.75, green: 0.75, blue: 1), alpha: 0.4 + 0.6 * a)
+            drawSpiral(context: &context, centre: ac, radius: ar, rotation: -t * 0.12, tilt: 0.225,
+                       core: Color(red: 1, green: 0.92, blue: 0.8), arm: Color(red: 0.75, green: 0.75, blue: 1), alpha: 0.4 + 0.6 * a,
+                       image: Self.andromeda)
         }
     }
 
     private func drawSpiral(context: inout GraphicsContext, centre: CGPoint, radius: CGFloat, rotation: Double, tilt: CGFloat,
-                            core: Color, arm: Color, alpha: Double) {
+                            core: Color, arm: Color, alpha: Double, image: UIImage?) {
         guard radius > 2 else { return }
+        if let image {
+            var galaxy = context
+            galaxy.blendMode = .normal
+            galaxy.opacity = alpha
+            galaxy.translateBy(x: centre.x, y: centre.y)
+            galaxy.scaleBy(x: 1, y: tilt)
+            galaxy.rotate(by: .radians(rotation))
+            galaxy.draw(Image(uiImage: image),
+                        in: CGRect(x: -radius, y: -radius, width: radius * 2, height: radius * 2))
+            return
+        }
         // Core glow
         let coreR = radius * 0.28
         context.fill(Path(ellipseIn: CGRect(x: centre.x - coreR, y: centre.y - coreR * tilt, width: coreR * 2, height: coreR * 2 * tilt)),

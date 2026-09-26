@@ -16,6 +16,7 @@ struct GalaxyMapView: View {
     @State private var toastTask: Task<Void, Never>?
 
     private let hitRadius: CGFloat = 28
+    private static let milkyWayBand = VisualAssets.image(named: "galaxy-milkyway-edge")
 
     var body: some View {
         GeometryReader { geo in
@@ -187,19 +188,31 @@ struct GalaxyMapView: View {
             ctx.fill(Path(ellipseIn: rect), with: .color(Color.white.opacity(s.alpha * tw)))
         }
 
-        // 2. Milky Way band — a faint blurred diagonal, brighter towards the galactic core.
-        ctx.drawLayer { layer in
-            layer.addFilter(.blur(radius: max(14, size.height * 0.06)))
-            var band = Path()
-            band.move(to: CGPoint(x: -size.width * 0.1, y: size.height * 0.88))
-            band.addQuadCurve(to: CGPoint(x: size.width * 1.1, y: size.height * 0.08),
-                              control: CGPoint(x: size.width * 0.45, y: size.height * 0.55))
-            layer.stroke(band, with: .color(Color.white.opacity(0.075)), lineWidth: size.height * 0.24)
-            layer.stroke(band, with: .color(Theme.accent.opacity(0.05)), lineWidth: size.height * 0.10)
-            if let core = model.nodes.first(where: { $0.kind == .blackHole }), let c = positions[core.id] {
-                let r = max(40, size.height * 0.18)
-                layer.fill(Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r * 0.6, width: r * 2, height: r * 1.2)),
-                           with: .color(Theme.warn.opacity(0.10)))
+        // 2. Edge-on Milky Way map, subdued behind routes and labels.
+        if let image = Self.milkyWayBand {
+            var band = ctx
+            band.blendMode = .normal
+            band.opacity = 0.34
+            band.clip(to: Path(CGRect(origin: .zero, size: size)))
+            band.translateBy(x: size.width * 0.5, y: size.height * 0.48)
+            band.rotate(by: .radians(Double(atan2(-size.height * 0.8, size.width * 1.2))))
+            let width = hypot(size.width * 1.2, size.height * 0.8)
+            band.draw(Image(uiImage: image),
+                      in: CGRect(x: -width / 2, y: -width / 8, width: width, height: width / 4))
+        } else {
+            ctx.drawLayer { layer in
+                layer.addFilter(.blur(radius: max(14, size.height * 0.06)))
+                var band = Path()
+                band.move(to: CGPoint(x: -size.width * 0.1, y: size.height * 0.88))
+                band.addQuadCurve(to: CGPoint(x: size.width * 1.1, y: size.height * 0.08),
+                                  control: CGPoint(x: size.width * 0.45, y: size.height * 0.55))
+                layer.stroke(band, with: .color(Color.white.opacity(0.075)), lineWidth: size.height * 0.24)
+                layer.stroke(band, with: .color(Theme.accent.opacity(0.05)), lineWidth: size.height * 0.10)
+                if let core = model.nodes.first(where: { $0.kind == .blackHole }), let c = positions[core.id] {
+                    let r = max(40, size.height * 0.18)
+                    layer.fill(Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r * 0.6, width: r * 2, height: r * 1.2)),
+                               with: .color(Theme.warn.opacity(0.10)))
+                }
             }
         }
 

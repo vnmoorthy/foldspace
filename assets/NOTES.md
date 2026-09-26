@@ -15,9 +15,9 @@ is procedural or computed from equations. No reference imagery was downloaded.
 ## Delivery and integration
 
 The assets are handed over in this folder, as permitted by the brief. No asset
-branch switch is required in the shared checkout. The work is confined to
-`assets/` and `blender/codex/`; app source and project configuration belong to the
-iOS implementation work.
+branch switch is required in the shared checkout. The original generation work
+was confined to `assets/` and `blender/codex/`. Following the user's request to
+continue, the iOS integration now connects these resources to the app views.
 
 | Asset | Exact output | Contract |
 |---|---|---|
@@ -35,12 +35,18 @@ The explicit body list in the brief has **26 IDs**, including Sirius B. Sirius B
 is a white dwarf and needs the stellar emission material despite its required
 `planet-sirius-b` filename.
 
-After adding the new files, regenerate the Xcode project or update Copy Bundle
-Resources so every filename is present in the application bundle. The planet and
-Sun diffuse loader uses the names above. Movie playback, atlas stepping, galaxy
-planes, optional material companions, and view-dependent effects still require
-app-side use of these resources. This handoff validates the files themselves;
-it does not claim that every effect has been integrated or tested in Bitrig.
+The regenerated Xcode project includes every media filename and the new loaders.
+`BlackHoleView` places the transparent loop between its background and gameplay
+layers, keeps a still until playback is ready, and uses the still for Reduce Motion.
+Warp and debris views step through the atlases. Galaxy views use the authored
+planes and edge band. Planet materials load roughness and emission companions,
+mask Earth's lights to the night side, and apply stellar limb darkening. The Sun
+has its corona billboard and a photosphere patch in the dive sequence.
+
+See [material integration](review-materials.md) and
+[sequence integration](review-sequences.md) for implementation details and visual
+acceptance checks. Build and runtime verification are recorded in
+`blender/codex/INTEGRATION.md`; integration does not imply a completed Bitrig check.
 
 Treat diffuse/emission PNGs as sRGB and roughness companions as linear data.
 Keep the planet UV seam at −X, with north at the top. There is no baked planet

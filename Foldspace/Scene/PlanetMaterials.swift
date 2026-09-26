@@ -2,10 +2,9 @@ import SceneKit
 import UIKit
 import CoreGraphics
 
-/// Procedural SceneKit materials for every `CelestialBody`.
+/// SceneKit materials with bundled Blender maps and procedural fallbacks.
 ///
-/// Nothing here comes from an asset catalog: textures are synthesised at runtime with tileable
-/// value-noise / fBm and a little CoreGraphics on top (craters, storms, sunspots), then cached per
+/// Missing maps are synthesised with tileable value-noise / fBm and CoreGraphics, then cached per
 /// body id (+ size). The cache is lock-protected so `SpaceScene` can pre-warm the rest of a star
 /// system on a background queue while the current planet is already on screen.
 enum PlanetMaterials {
@@ -25,9 +24,16 @@ enum PlanetMaterials {
         case .star:
             let tex = texture(for: body)
             m.lightingModel = .constant
-            m.diffuse.contents = tex
-            m.emission.contents = tex
-            m.emission.intensity = 0.55
+            m.diffuse.contents = UIColor.black
+            m.emission.contents = bundledCompanion(for: body, suffix: "emissive") ?? tex
+            m.emission.intensity = 1.0
+            m.shaderModifiers = [.surface: """
+                #pragma body
+                float mu = clamp(dot(normalize(_surface.normal), normalize(_surface.view)), 0.0, 1.0);
+                float limb = 0.3 + 0.7 * mu;
+                _surface.diffuse.rgb *= limb;
+                _surface.emission.rgb *= limb;
+                """]
         case .blackHole:
             m.lightingModel = .constant
             m.diffuse.contents = UIColor.black
@@ -35,8 +41,9 @@ enum PlanetMaterials {
             m.specular.contents = UIColor.black
         case .galaxy:
             m.lightingModel = .constant
-            m.diffuse.contents = galaxyTexture()
-            m.blendMode = .additive
+            let image = body.id == BodyID.andromedaGalaxy ? bundledImage(named: "galaxy-andromeda") : nil
+            m.diffuse.contents = image ?? galaxyTexture()
+            m.blendMode = image == nil ? .add : .alpha
             m.isDoubleSided = true
             m.writesToDepthBuffer = false
         case .planet, .dwarfPlanet:
@@ -44,14 +51,34 @@ enum PlanetMaterials {
             m.lightingModel = .physicallyBased
             m.diffuse.contents = texture(for: body)
             m.metalness.contents = NSNumber(value: 0.0)
-            m.roughness.contents = NSNumber(value: roughness(for: cls))
-            if cls == .lava {
+            if let map = bundledCompanion(for: body, suffix: "roughness", linear: true) {
+                m.roughness.contents = map
+            } else {
+                m.roughness.contents = NSNumber(value: roughness(for: cls))
+            }
+            if let map = bundledCompanion(for: body, suffix: "emissive") {
+                m.emission.contents = map
+                m.emission.intensity = body.id == "earth" ? 0.3 : 1.0
+                if body.id == "earth" {
+                    // SpaceScene supplies its key-light direction in the same view space as N.
+                    m.setValue(NSValue(scnVector3: SCNVector3(-4, 4, 5)), forKey: "stellarDirectionView")
+                    m.shaderModifiers = [.surface: """
+                        #pragma arguments
+                        float3 stellarDirectionView;
+                        #pragma body
+                        float day = dot(normalize(_surface.normal), normalize(stellarDirectionView));
+                        _surface.emission.rgb *= 1.0 - smoothstep(-0.15, 0.15, day);
+                        """]
+                }
+            } else if cls == .lava {
                 m.emission.contents = lavaEmissionTexture(for: body)
                 m.emission.intensity = 1.0
             }
         }
         configureSampling(m.diffuse)
         configureSampling(m.emission)
+        configureSampling(m.roughness)
+        if body.kind == .galaxy { m.diffuse.wrapS = .clamp }
         return m
     }
 
@@ -101,10 +128,37 @@ enum PlanetMaterials {
     /// `planet-<bodyid>.png` for planets and `sun-photosphere.png` for the Sun.
     static func bundledTexture(for body: CelestialBody) -> UIImage? {
         let name = body.id == BodyID.sun ? "sun-photosphere" : "planet-\(body.id)"
+        return bundledImage(named: name)
+    }
+
+    /// Named resources share the same cache as the generated maps. Scalar maps retain linear data.
+    static func bundledImage(named name: String, linear: Bool = false) -> UIImage? {
+        let key = "bundle#\(name)#\(linear)"
+        if let hit = cache.get(key) { return hit }
         guard let url = Bundle.main.url(forResource: name, withExtension: "png"),
               let data = try? Data(contentsOf: url),
-              let image = UIImage(data: data) else { return nil }
+              var image = UIImage(data: data) else { return nil }
+        if linear, let source = image.cgImage,
+           let space = CGColorSpace(name: CGColorSpace.linearSRGB),
+           let tagged = source.copy(colorSpace: space) {
+            image = UIImage(cgImage: tagged)
+        }
+        cache.set(key, image)
         return image
+    }
+
+    private static func bundledCompanion(for body: CelestialBody, suffix: String, linear: Bool = false) -> UIImage? {
+        bundledImage(named: "planet-\(body.id)-\(suffix)", linear: linear)
+    }
+
+    /// Load companions off the main thread along with the albedo before constructing a material.
+    static func prepareTextures(for body: CelestialBody, size: Int = defaultSize) {
+        _ = texture(for: body, size: size)
+        _ = bundledCompanion(for: body, suffix: "roughness", linear: true)
+        let emission = bundledCompanion(for: body, suffix: "emissive")
+        if emission == nil, body.planetClass == .lava {
+            _ = lavaEmissionTexture(for: body, size: size)
+        }
     }
 
     /// Cache lookup that never renders. `SpaceScene` uses it to decide whether to show a placeholder.
@@ -118,8 +172,7 @@ enum PlanetMaterials {
         guard !pending.isEmpty else { return }
         DispatchQueue.global(qos: .utility).async {
             for b in pending {
-                _ = texture(for: b, size: size)
-                if (b.planetClass ?? .rocky) == .lava { _ = lavaEmissionTexture(for: b, size: size) }
+                prepareTextures(for: b, size: size)
             }
         }
     }

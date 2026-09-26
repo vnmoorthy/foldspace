@@ -18,6 +18,7 @@
 		14AB98F1D31326B4DC0BAE62 /* PlanetMaterials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7744E30328FD9D2941C249AC /* PlanetMaterials.swift */; };
 		1B1709B7239700100344385C /* planet-barnard-b.png in Resources */ = {isa = PBXBuildFile; fileRef = 6FF7CF53C0D455F80180C45F /* planet-barnard-b.png */; };
 		1B523452B44EC5E2A6C3BFC5 /* AndromedaFinaleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F06BC8DC9533D163914B4AD7 /* AndromedaFinaleView.swift */; };
+		1DCBFE57481D630A1672A24E /* review-materials.md in Resources */ = {isa = PBXBuildFile; fileRef = F849552BC8F1F26A2A24B19E /* review-materials.md */; };
 		1E049051BE2AD0A85085710C /* ShipLostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05BF379514135A4F292B1C35 /* ShipLostView.swift */; };
 		21F5949BD03A60CB515B0CEC /* planet-proxima-b.png in Resources */ = {isa = PBXBuildFile; fileRef = 02919D51DA4D22B52B661FD4 /* planet-proxima-b.png */; };
 		232ED6FB9CD349DEE8E0DFA3 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F222B8BD99BF60190D41DF /* Theme.swift */; };
@@ -46,6 +47,7 @@
 		80443B9A90854BDC0F97362A /* SpaceScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = A70E09844B1082AD87D44E99 /* SpaceScene.swift */; };
 		82707CE9169D7FFDCD6E67AC /* galaxy-milkyway.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C45ECB262CFAF3B4874EDBA /* galaxy-milkyway.png */; };
 		831DE2FFF117484612146B39 /* planet-proxima-d.png in Resources */ = {isa = PBXBuildFile; fileRef = B3C03A3A215D2BA62D1FF374 /* planet-proxima-d.png */; };
+		8B0234833BCE94C8913FBC1C /* review-sequences.md in Resources */ = {isa = PBXBuildFile; fileRef = 4959A4249104EB06A5C4807D /* review-sequences.md */; };
 		8C12DDCB1DBC7E1361448B6A /* planet-trappist-1b-emissive.png in Resources */ = {isa = PBXBuildFile; fileRef = 4F08F65C20B3E1C423A66D30 /* planet-trappist-1b-emissive.png */; };
 		908E24A28CEBA6F22A19F522 /* WeaponView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9ACA3035130CD295D06B463 /* WeaponView.swift */; };
 		9242C212C2D8D1C61EE416F5 /* shatter-debris-4x4.png in Resources */ = {isa = PBXBuildFile; fileRef = CE56C53073ED742A47CFB05B /* shatter-debris-4x4.png */; };
@@ -77,7 +79,9 @@
 		CC3E26FE3CD426752587F526 /* warp-bubble-8x1.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C3D8DE8CC476DDA3FFE77B7 /* warp-bubble-8x1.png */; };
 		CCB4F91BD70B18FC34665686 /* planet-barnard-d.png in Resources */ = {isa = PBXBuildFile; fileRef = 2F476DC9BA24AB33CAC14208 /* planet-barnard-d.png */; };
 		CD694B23748FDE2A989450BD /* planet-jupiter.png in Resources */ = {isa = PBXBuildFile; fileRef = E0A0637493FD09DF9A32F2E8 /* planet-jupiter.png */; };
+		CD6C8709869E116B6A48D089 /* VisualAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CCCB2E8E0C73C5184EF0D95 /* VisualAssets.swift */; };
 		CED422C30113FFA5F4912AB1 /* planet-trappist-1f.png in Resources */ = {isa = PBXBuildFile; fileRef = D619B2FE972B1CBC31ADD080 /* planet-trappist-1f.png */; };
+		CF65785814FA0BBBED4AE5B4 /* TransparentLoopingMovie.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD115E738044AEBC5E736E98 /* TransparentLoopingMovie.swift */; };
 		D0AEF346D67DBBA58095B195 /* Universe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B756CA34A4A7AE8C8D0FE62 /* Universe.swift */; };
 		D10FFBDC93A38ED8ACEFC848 /* planet-neptune.png in Resources */ = {isa = PBXBuildFile; fileRef = A4C89E7F292B3D76AEC76674 /* planet-neptune.png */; };
 		D76161B58D6316812C3354C3 /* FoldSeam.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AFA414D6D581F525F7604D8 /* FoldSeam.swift */; };
@@ -115,6 +119,7 @@
 		362E8ED5EF8B353ACC3B809D /* sun-corona.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "sun-corona.png"; sourceTree = "<group>"; };
 		401803EDFE814D5526EA9E29 /* GalaxyMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalaxyMapView.swift; sourceTree = "<group>"; };
 		47E455B1053996826854D6A1 /* blackhole-still.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "blackhole-still.png"; sourceTree = "<group>"; };
+		4959A4249104EB06A5C4807D /* review-sequences.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "review-sequences.md"; sourceTree = "<group>"; };
 		4F08F65C20B3E1C423A66D30 /* planet-trappist-1b-emissive.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "planet-trappist-1b-emissive.png"; sourceTree = "<group>"; };
 		517A68287149AECDEFD5A081 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		5FC8541B37672C2DF2443003 /* planet-uranus.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "planet-uranus.png"; sourceTree = "<group>"; };
@@ -145,6 +150,7 @@
 		9B436B25D687035F14577832 /* planet-eps-eri-b.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "planet-eps-eri-b.png"; sourceTree = "<group>"; };
 		9B9597D2D10040B6932BEA7F /* planet-barnard-e.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "planet-barnard-e.png"; sourceTree = "<group>"; };
 		9C3D8DE8CC476DDA3FFE77B7 /* warp-bubble-8x1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "warp-bubble-8x1.png"; sourceTree = "<group>"; };
+		9CCCB2E8E0C73C5184EF0D95 /* VisualAssets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualAssets.swift; sourceTree = "<group>"; };
 		9FB90BCBDBB919831EF3EA55 /* notes-sprites.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "notes-sprites.md"; sourceTree = "<group>"; };
 		9FF15F22BC3B1C1320D5D3DE /* planet-trappist-1e.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "planet-trappist-1e.png"; sourceTree = "<group>"; };
 		A2FE9F686585C535B1C05283 /* planet-earth.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "planet-earth.png"; sourceTree = "<group>"; };
@@ -161,6 +167,7 @@
 		C295FB7F2E7B8A3DE54B7989 /* planet-wolf-359-b.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "planet-wolf-359-b.png"; sourceTree = "<group>"; };
 		C3C6470769D313F2D5A53E64 /* PREVIEW.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = PREVIEW.png; sourceTree = "<group>"; };
 		C9685C2DC778643ACB9878AE /* planet-trappist-1f-roughness.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "planet-trappist-1f-roughness.png"; sourceTree = "<group>"; };
+		CD115E738044AEBC5E736E98 /* TransparentLoopingMovie.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransparentLoopingMovie.swift; sourceTree = "<group>"; };
 		CE56C53073ED742A47CFB05B /* shatter-debris-4x4.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "shatter-debris-4x4.png"; sourceTree = "<group>"; };
 		D1A1BB9A49B5AAFC91F44379 /* notes-planets.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "notes-planets.md"; sourceTree = "<group>"; };
 		D256AF5D37EE339E0CCA265F /* blackhole-loop.mov */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; path = "blackhole-loop.mov"; sourceTree = "<group>"; };
@@ -179,6 +186,7 @@
 		F06BC8DC9533D163914B4AD7 /* AndromedaFinaleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AndromedaFinaleView.swift; sourceTree = "<group>"; };
 		F24828C35EBCBC542B8F886D /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = manifest.json; sourceTree = "<group>"; };
 		F3E602ABC977E4F93AE2FC74 /* planet-mars.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "planet-mars.png"; sourceTree = "<group>"; };
+		F849552BC8F1F26A2A24B19E /* review-materials.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "review-materials.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -241,6 +249,8 @@
 				78C76F18FBCA1EE9486C8874 /* notes-sun.md */,
 				1A42EF487760F7A59AB2AF26 /* NOTES.md */,
 				C3C6470769D313F2D5A53E64 /* PREVIEW.png */,
+				F849552BC8F1F26A2A24B19E /* review-materials.md */,
+				4959A4249104EB06A5C4807D /* review-sequences.md */,
 				5BD90DDB679257F3D75DED24 /* sprites */,
 				F8EA2807FF1E0526C946650F /* textures */,
 				B0728D08AB1130E9ED1B9BA5 /* video */,
@@ -363,6 +373,8 @@
 				8AFA414D6D581F525F7604D8 /* FoldSeam.swift */,
 				0426E21FDCE96BC78DD589EF /* Haptics.swift */,
 				11F222B8BD99BF60190D41DF /* Theme.swift */,
+				CD115E738044AEBC5E736E98 /* TransparentLoopingMovie.swift */,
+				9CCCB2E8E0C73C5184EF0D95 /* VisualAssets.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -556,6 +568,8 @@
 				7EEE217ED9122FB615E65482 /* planet-uranus.png in Resources */,
 				A31A789C4B23C9CE46CFD07D /* planet-venus.png in Resources */,
 				A06287FF39FB75D7E3B4FD4E /* planet-wolf-359-b.png in Resources */,
+				1DCBFE57481D630A1672A24E /* review-materials.md in Resources */,
+				8B0234833BCE94C8913FBC1C /* review-sequences.md in Resources */,
 				9242C212C2D8D1C61EE416F5 /* shatter-debris-4x4.png in Resources */,
 				9CE88C4377B1D383011F7F87 /* sun-corona.png in Resources */,
 				AA644B0B1E139878F02A2A2A /* sun-photosphere.png in Resources */,
@@ -597,8 +611,10 @@
 				B22449C0CB0BB381D83420D8 /* SunDiveView.swift in Sources */,
 				BC72FCD1D75C9E1CBDF1AF94 /* Telemetry.swift in Sources */,
 				232ED6FB9CD349DEE8E0DFA3 /* Theme.swift in Sources */,
+				CF65785814FA0BBBED4AE5B4 /* TransparentLoopingMovie.swift in Sources */,
 				D0AEF346D67DBBA58095B195 /* Universe.swift in Sources */,
 				A5AD0864462EC34720634C57 /* UniverseData.swift in Sources */,
+				CD6C8709869E116B6A48D089 /* VisualAssets.swift in Sources */,
 				36D5EBA8C1CF69BFEC6D801C /* WarpSequenceView.swift in Sources */,
 				908E24A28CEBA6F22A19F522 /* WeaponView.swift in Sources */,
 			);

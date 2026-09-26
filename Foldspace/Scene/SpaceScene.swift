@@ -175,6 +175,7 @@ final class SpaceScene {
 
         spawnBeam(to: center)
         spawnFlash(at: center, radius: radius)
+        spawnDebrisSprite(at: center, radius: radius)
         spawnFragments(at: center, radius: radius, material: material)
     }
 
@@ -257,7 +258,11 @@ final class SpaceScene {
         switch body.kind {
         case .star:
             addSphere(body, radius: r, segments: 56)
-            addHalo(color: PlanetMaterials.baseColor(for: body), size: r * 3.6, opacity: 0.95, falloff: 2.2)
+            if body.id == BodyID.sun, let corona = PlanetMaterials.bundledImage(named: "sun-corona") {
+                addSunCorona(corona, radius: r)
+            } else {
+                addHalo(color: PlanetMaterials.baseColor(for: body), size: r * 3.6, opacity: 0.95, falloff: 2.2)
+            }
             spin(period: 70)
 
         case .blackHole:
@@ -301,7 +306,9 @@ final class SpaceScene {
         let node = SCNNode(geometry: sphere)
         node.name = "body"
         if PlanetMaterials.cachedTexture(for: body) != nil {
-            sphere.firstMaterial = PlanetMaterials.material(for: body)
+            let material = PlanetMaterials.material(for: body)
+            configureStellarDirection(material)
+            sphere.firstMaterial = material
         } else {
             sphere.firstMaterial = PlanetMaterials.placeholderMaterial(for: body)
             loadTextureAsync(for: body)
@@ -313,7 +320,7 @@ final class SpaceScene {
     private func loadTextureAsync(for body: CelestialBody) {
         let id = body.id
         DispatchQueue.global(qos: .userInitiated).async {
-            _ = PlanetMaterials.texture(for: body)
+            PlanetMaterials.prepareTextures(for: body)
             Task { @MainActor [weak self] in
                 self?.applyTexture(forBodyID: id)
             }
@@ -323,12 +330,21 @@ final class SpaceScene {
     private func applyTexture(forBodyID id: String) {
         guard let body = currentBody, body.id == id, let node = bodySphereNode, shatteredBodyID == nil else { return }
         let material = PlanetMaterials.material(for: body)
+        configureStellarDirection(material)
         material.transparency = 0
         node.geometry?.firstMaterial = material
         SCNTransaction.begin()
         SCNTransaction.animationDuration = 0.35
         material.transparency = 1
         SCNTransaction.commit()
+    }
+
+    private func configureStellarDirection(_ material: SCNMaterial) {
+        guard material.name == "earth", material.shaderModifiers != nil else { return }
+        // Directional lights shine down local −Z. Camera and key share the rig, so this view-space
+        // direction remains valid while the hinge moves; the surface normal tracks the body spin.
+        let direction = cameraNode.convertVector(SCNVector3(0, 0, 1), from: keyLight)
+        material.setValue(NSValue(scnVector3: direction), forKey: "stellarDirectionView")
     }
 
     private static func hasAtmosphere(_ cls: PlanetClass) -> Bool {
@@ -397,6 +413,27 @@ final class SpaceScene {
         node.name = "rings"
         node.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)   // lie in the equatorial plane
         bodyTilt.addChildNode(node)
+    }
+
+    private func addSunCorona(_ image: UIImage, radius: Float) {
+        let plane = SCNPlane(width: CGFloat(radius * 6.3), height: CGFloat(radius * 6.3))
+        let material = SCNMaterial()
+        material.lightingModel = .constant
+        material.diffuse.contents = image
+        material.diffuse.wrapS = .clamp
+        material.diffuse.wrapT = .clamp
+        material.blendMode = .alpha
+        material.isDoubleSided = true
+        material.writesToDepthBuffer = false
+        material.readsFromDepthBuffer = true
+        plane.firstMaterial = material
+        let node = SCNNode(geometry: plane)
+        node.name = "sun-corona"
+        node.opacity = 0.9
+        node.constraints = [SCNBillboardConstraint()]
+        // The central plane sits behind the sphere's front hemisphere; its transparent center
+        // and depth test preserve the photosphere while keeping the corona scale at 6.3 radii.
+        bodyAnchor.addChildNode(node)
     }
 
     private func addBlackHole(_ body: CelestialBody, radius: Float) {
@@ -631,7 +668,7 @@ final class SpaceScene {
         warpSystem.particleColor = UIColor(red: 0.62, green: 0.95, blue: 1.0, alpha: 1)
         warpSystem.particleColorVariation = SCNVector4(0.15, 0.05, 0, 0.25)
         warpSystem.particleImage = PlanetMaterials.haloTexture(color: .white, size: 32, falloff: 1.6)
-        warpSystem.blendMode = .add
+        warpSystem.blendMode = .additive
         warpSystem.isLightingEnabled = false
         warpSystem.isAffectedByGravity = false
         warpSystem.isLocal = true                              // streaks ride with the camera
@@ -701,6 +738,49 @@ final class SpaceScene {
         SCNTransaction.animationTimingFunction = CAMediaTimingFunction(name: .easeOut)
         light.intensity = 0
         SCNTransaction.commit()
+    }
+
+    private static let debrisFrames: [UIImage] = {
+        guard let atlas = PlanetMaterials.bundledImage(named: "shatter-debris-4x4")?.cgImage,
+              atlas.width == 1024, atlas.height == 1024 else { return [] }
+        return (0..<16).compactMap { index in
+            let rect = CGRect(x: (index % 4) * 256, y: (index / 4) * 256, width: 256, height: 256)
+            return atlas.cropping(to: rect).map { UIImage(cgImage: $0) }
+        }
+    }()
+
+    private func spawnDebrisSprite(at center: SCNVector3, radius: Float) {
+        let frames = Self.debrisFrames
+        guard frames.count == 16 else { return }
+        // The atlas camera covers 9.9515 model radii. Keep that scale so frame zero matches the
+        // planet diameter and the later fragments disperse without stretching the image itself.
+        let plane = SCNPlane(width: CGFloat(radius * 9.9515), height: CGFloat(radius * 9.9515))
+        let material = SCNMaterial()
+        material.lightingModel = .constant
+        material.diffuse.contents = frames[0]
+        material.diffuse.wrapS = .clamp
+        material.diffuse.wrapT = .clamp
+        material.blendMode = .alpha
+        material.isDoubleSided = true
+        material.writesToDepthBuffer = false
+        plane.firstMaterial = material
+        let node = SCNNode(geometry: plane)
+        node.name = "shatter-debris"
+        let behind = cameraNode.convertVector(SCNVector3(0, 0, -radius * 0.15), to: nil)
+        node.position = SCNVector3(center.x + behind.x, center.y + behind.y, center.z + behind.z)
+        node.constraints = [SCNBillboardConstraint()]
+        node.opacity = 0.65
+        fragmentRoot.addChildNode(node)
+
+        // One pass in authored top-left row order, then fade the dispersed final frame.
+        var actions: [SCNAction] = []
+        for frame in frames {
+            actions.append(.run { node in node.geometry?.firstMaterial?.diffuse.contents = frame })
+            actions.append(.wait(duration: 0.15))
+        }
+        actions.append(.fadeOut(duration: 0.3))
+        actions.append(.removeFromParentNode())
+        node.runAction(.sequence(actions))
     }
 
     private func spawnFragments(at center: SCNVector3, radius: Float, material: SCNMaterial) {

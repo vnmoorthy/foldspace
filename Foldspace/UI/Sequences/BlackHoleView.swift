@@ -15,6 +15,8 @@ import SwiftUI
 struct BlackHoleView: View {
     @Environment(GameStore.self) private var store
     @Environment(HingeEngine.self) private var hinge
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var model = SlingshotModel()
     /// Finger x (view coordinates) while a press is held; nil when released.
@@ -22,9 +24,12 @@ struct BlackHoleView: View {
     @State private var autopilot = false
     @State private var viewSize: CGSize = .zero
     @State private var lastRumble: TimeInterval = 0
+    @State private var movieReady = false
 
     private static let demoMode = ProcessInfo.processInfo.environment["FOLDSPACE_DEMO"] == "blackhole"
     private static let starField = BHStar.field(count: 280)
+    private static let holeStill = VisualAssets.image(named: "blackhole-still")
+    private static let holeMovie = Bundle.main.url(forResource: "blackhole-loop", withExtension: "mov")
     /// Below this hinge angle the ship is held at the start (the phone is closed or nearly so).
     private static let releaseAngle: Double = 30
 
@@ -46,9 +51,35 @@ struct BlackHoleView: View {
                     let t = timeline.date.timeIntervalSinceReferenceDate
                     let stress: Double = snapshot.phase == .flying ? snapshot.tidalSeverity : 0
                     let shakeAmp: Double = stress * 4
-                    Canvas { context, canvasSize in
-                        drawScene(&context, size: canvasSize, t: t, model: snapshot, fold: fold)
+                    ZStack {
+                        Canvas { context, canvasSize in
+                            drawScene(&context, size: canvasSize, t: t, model: snapshot, fold: fold, foreground: false)
+                        }
+
+                        // The render spans -12...+12 rs. Match the gameplay coordinate scale;
+                        // the apparent shadow then falls at 2.598 rs, not the horizon at rs.
+                        let diameter = 24 * CGFloat(SlingshotModel.rs) * min(size.width, size.height)
+                        if let still = Self.holeStill {
+                            Image(uiImage: still)
+                                .resizable()
+                                .frame(width: diameter, height: diameter)
+                                .opacity(movieReady && !reduceMotion ? 0 : 1)
+                        }
+                        if let movie = Self.holeMovie, !reduceMotion {
+                            TransparentLoopingMovie(url: movie, isPlaying: scenePhase == .active) { ready in
+                                movieReady = ready
+                            }
+                            .frame(width: diameter, height: diameter)
+                            .opacity(movieReady ? 1 : 0)
+                        }
+
+                        Canvas { context, canvasSize in
+                            drawScene(&context, size: canvasSize, t: t, model: snapshot, fold: fold, foreground: true)
+                        }
                     }
+                    .frame(width: size.width, height: size.height)
+                    .clipped()
+                    .allowsHitTesting(false)
                     .offset(x: CGFloat(sin(t * 41) * shakeAmp), y: CGFloat(cos(t * 33.7) * shakeAmp))
                 }
 
@@ -341,9 +372,13 @@ struct BlackHoleView: View {
         return String(format: "%02d:%04.1f", minutes, rest)
     }
 
+    private var renderedHoleAvailable: Bool {
+        Self.holeStill != nil || (movieReady && !reduceMotion)
+    }
+
     // MARK: - Canvas
 
-    private func drawScene(_ context: inout GraphicsContext, size: CGSize, t: Double, model: SlingshotModel, fold: Double) {
+    private func drawScene(_ context: inout GraphicsContext, size: CGSize, t: Double, model: SlingshotModel, fold: Double, foreground: Bool) {
         let w = size.width
         let h = size.height
         guard w > 1, h > 1 else { return }
@@ -366,7 +401,8 @@ struct BlackHoleView: View {
             let r = max(0.001, (dx * dx + dy * dy).squareRoot())
             let shift = min(lensK / (r * r), r * 0.7)
             let r2 = r - shift
-            if r2 < rs * 1.35 { return nil }
+            let shadowFactor = renderedHoleAvailable ? sqrt(27) / 2 : 1.35
+            if r2 < rs * shadowFactor { return nil }
             let s = r2 / r
             return CGPoint(x: c.x + CGFloat(dx * s) * u, y: c.y + CGFloat(dy * s) * u)
         }
@@ -390,39 +426,42 @@ struct BlackHoleView: View {
             Path(ellipseIn: CGRect(x: centre.x - radius, y: centre.y - radius, width: radius * 2, height: radius * 2))
         }
 
-        // --- Space
-        context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(Color(hex: "020309")))
-        context.fill(Path(CGRect(origin: .zero, size: size)), with: .radialGradient(
-            Gradient(colors: [Color(hex: "FF7A1E").opacity(0.14), Color(hex: "3A1040").opacity(0.06), .clear]),
-            center: c, startRadius: rsPx * 1.5, endRadius: rsPx * 11))
+        if !foreground {
+            // --- Space, kept behind the transparent movie instead of covering it.
+            context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(Color(hex: "020309")))
+            context.fill(Path(CGRect(origin: .zero, size: size)), with: .radialGradient(
+                Gradient(colors: [Color(hex: "FF7A1E").opacity(0.14), Color(hex: "3A1040").opacity(0.06), .clear]),
+                center: c, startRadius: rsPx * 1.5, endRadius: rsPx * 11))
 
-        // --- Lensed grid
-        let spacing = 0.13 * u
-        var grid = Path()
-        var gx = c.x.truncatingRemainder(dividingBy: spacing)
-        while gx <= w {
-            addLensedLine(&grid, from: CGPoint(x: gx, y: 0), to: CGPoint(x: gx, y: h))
-            gx += spacing
-        }
-        var gy = c.y.truncatingRemainder(dividingBy: spacing)
-        while gy <= h {
-            addLensedLine(&grid, from: CGPoint(x: 0, y: gy), to: CGPoint(x: w, y: gy))
-            gy += spacing
-        }
-        context.stroke(grid, with: .color(Theme.accent.opacity(0.11)), lineWidth: 0.8)
+            // --- Lensed grid
+            let spacing = 0.13 * u
+            var grid = Path()
+            var gx = c.x.truncatingRemainder(dividingBy: spacing)
+            while gx <= w {
+                addLensedLine(&grid, from: CGPoint(x: gx, y: 0), to: CGPoint(x: gx, y: h))
+                gx += spacing
+            }
+            var gy = c.y.truncatingRemainder(dividingBy: spacing)
+            while gy <= h {
+                addLensedLine(&grid, from: CGPoint(x: 0, y: gy), to: CGPoint(x: w, y: gy))
+                gy += spacing
+            }
+            context.stroke(grid, with: .color(Theme.accent.opacity(0.11)), lineWidth: 0.8)
 
-        // --- Stars (three brightness buckets, one fill each)
-        var starPaths = [Path(), Path(), Path()]
-        for star in Self.starField {
-            let base = CGPoint(x: CGFloat(star.x) * w, y: CGFloat(star.y) * h)
-            guard let p = lensed(base) else { continue }
-            let twinkle = 0.75 + 0.25 * sin(t * star.twinkleSpeed + star.phase)
-            let r = CGFloat(star.size * twinkle)
-            starPaths[star.bucket].addEllipse(in: CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2))
+            // --- Stars (three brightness buckets, one fill each)
+            var starPaths = [Path(), Path(), Path()]
+            for star in Self.starField {
+                let base = CGPoint(x: CGFloat(star.x) * w, y: CGFloat(star.y) * h)
+                guard let p = lensed(base) else { continue }
+                let twinkle = 0.75 + 0.25 * sin(t * star.twinkleSpeed + star.phase)
+                let r = CGFloat(star.size * twinkle)
+                starPaths[star.bucket].addEllipse(in: CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2))
+            }
+            context.fill(starPaths[0], with: .color(Color.white.opacity(0.32)))
+            context.fill(starPaths[1], with: .color(Color(hex: "CFE6FF").opacity(0.6)))
+            context.fill(starPaths[2], with: .color(Color.white.opacity(0.95)))
+            return
         }
-        context.fill(starPaths[0], with: .color(Color.white.opacity(0.32)))
-        context.fill(starPaths[1], with: .color(Color(hex: "CFE6FF").opacity(0.6)))
-        context.fill(starPaths[2], with: .color(Color.white.opacity(0.95)))
 
         // --- Exit lane (x > 92 % w, |y − centre| < 40 % h)
         let laneX = w * 0.92
@@ -442,19 +481,21 @@ struct BlackHoleView: View {
         context.draw(Text("EXIT").font(.mono(8, weight: .bold)).foregroundStyle(Theme.gain),
                      at: CGPoint(x: laneX - 16, y: laneTop + 8), anchor: .center)
 
-        // --- Accretion disc (back half), event horizon, disc front half, photon ring
-        drawAccretionDisc(&context, centre: c, rsPx: rsPx, discAngle: model.discAngle, frontOnly: false)
+        // --- Procedural fallback while no rendered still/movie is available.
+        if !renderedHoleAvailable {
+            drawAccretionDisc(&context, centre: c, rsPx: rsPx, discAngle: model.discAngle, frontOnly: false)
 
-        context.fill(circle(c, rsPx * 1.5), with: .radialGradient(
-            Gradient(colors: [.black, .black, Color.black.opacity(0)]),
-            center: c, startRadius: rsPx * 0.9, endRadius: rsPx * 1.45))
-        context.fill(circle(c, rsPx), with: .color(.black))
+            context.fill(circle(c, rsPx * 1.5), with: .radialGradient(
+                Gradient(colors: [.black, .black, Color.black.opacity(0)]),
+                center: c, startRadius: rsPx * 0.9, endRadius: rsPx * 1.45))
+            context.fill(circle(c, rsPx), with: .color(.black))
 
-        drawAccretionDisc(&context, centre: c, rsPx: rsPx, discAngle: model.discAngle, frontOnly: true)
+            drawAccretionDisc(&context, centre: c, rsPx: rsPx, discAngle: model.discAngle, frontOnly: true)
 
-        let ringPulse = 0.85 + 0.15 * sin(t * 2.6)
-        context.stroke(circle(c, rsPx * 1.5), with: .color(Theme.warn.opacity(0.35 * ringPulse)), lineWidth: 6)
-        context.stroke(circle(c, rsPx * 1.5), with: .color(Color(hex: "FFF1D6").opacity(0.95)), lineWidth: 1.3)
+            let ringPulse = 0.85 + 0.15 * sin(t * 2.6)
+            context.stroke(circle(c, rsPx * 1.5), with: .color(Theme.warn.opacity(0.35 * ringPulse)), lineWidth: 6)
+            context.stroke(circle(c, rsPx * 1.5), with: .color(Color(hex: "FFF1D6").opacity(0.95)), lineWidth: 1.3)
+        }
 
         // --- Predicted path for the current fold (bends live as the phone folds)
         let ghost = model.predictedPath(fold: fold)

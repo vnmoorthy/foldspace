@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Act III finale, shown while `store.phase == .andromeda`.
 /// The Milky Way (seen from outside) recedes at the bottom while Andromeda grows at the top —
-/// both procedural spirals with rotating arms — over a slowly drifting starfield.
+/// rendered galaxy maps with a procedural fallback — over a slowly drifting starfield.
 struct AndromedaFinaleView: View {
     @Environment(GameStore.self) private var store
     @Environment(HingeEngine.self) private var hinge
@@ -11,6 +11,8 @@ struct AndromedaFinaleView: View {
     @State private var appearedAt = Date()
 
     private static let approach: TimeInterval = 9
+    private static let milkyWay = VisualAssets.image(named: "galaxy-milkyway")
+    private static let andromeda = VisualAssets.image(named: "galaxy-andromeda")
 
     var body: some View {
         let claimed = store.save.claimed.count
@@ -198,15 +200,15 @@ struct AndromedaFinaleView: View {
         drawGalaxy(context: &context, centre: mwCentre, radius: size.width * 0.46 * mwScale, tilt: 0.34,
                    rotation: t * 0.05, arms: 4, coreColor: Color(red: 1, green: 0.88, blue: 0.62),
                    armColor: Color(red: 0.72, green: 0.82, blue: 1), dust: Color(red: 0.35, green: 0.2, blue: 0.15),
-                   alpha: 0.95 - 0.35 * progress, seedSalt: 100)
+                   alpha: 0.95 - 0.35 * progress, seedSalt: 100, image: Self.milkyWay)
 
         // Andromeda: growing at the top.
         let anScale = 0.35 + 0.65 * progress
         let anCentre = CGPoint(x: size.width / 2, y: size.height * (0.24 - 0.02 * progress))
-        drawGalaxy(context: &context, centre: anCentre, radius: size.width * 0.52 * anScale, tilt: 0.42,
+        drawGalaxy(context: &context, centre: anCentre, radius: size.width * 0.52 * anScale, tilt: 0.225,
                    rotation: -t * 0.04, arms: 2, coreColor: Color(red: 1, green: 0.93, blue: 0.78),
                    armColor: Color(red: 0.78, green: 0.78, blue: 1), dust: Color(red: 0.3, green: 0.18, blue: 0.2),
-                   alpha: 0.55 + 0.45 * progress, seedSalt: 200)
+                   alpha: 0.55 + 0.45 * progress, seedSalt: 200, image: Self.andromeda)
 
         // Seam glow: the fold, where the last jump ended.
         let seamY = size.height / 2
@@ -216,8 +218,20 @@ struct AndromedaFinaleView: View {
     }
 
     private func drawGalaxy(context: inout GraphicsContext, centre: CGPoint, radius: CGFloat, tilt: CGFloat, rotation: Double,
-                            arms: Int, coreColor: Color, armColor: Color, dust: Color, alpha: Double, seedSalt: Int) {
+                            arms: Int, coreColor: Color, armColor: Color, dust: Color, alpha: Double, seedSalt: Int, image: UIImage?) {
         guard radius > 4 else { return }
+        if let image {
+            var galaxy = context
+            galaxy.blendMode = .normal
+            galaxy.opacity = alpha
+            galaxy.translateBy(x: centre.x, y: centre.y)
+            // Main maps are face-on. Andromeda's cos(77°) projection is applied once here.
+            galaxy.scaleBy(x: 1, y: tilt)
+            galaxy.rotate(by: .radians(rotation))
+            galaxy.draw(Image(uiImage: image),
+                        in: CGRect(x: -radius, y: -radius, width: radius * 2, height: radius * 2))
+            return
+        }
         // Halo + bulge
         context.fill(Path(ellipseIn: CGRect(x: centre.x - radius, y: centre.y - radius * tilt, width: radius * 2, height: radius * 2 * tilt)),
                      with: .radialGradient(Gradient(colors: [coreColor.opacity(alpha * 0.55), armColor.opacity(alpha * 0.12), .clear]),
