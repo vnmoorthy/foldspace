@@ -6,6 +6,7 @@ import SwiftUI
 struct AndromedaFinaleView: View {
     @Environment(GameStore.self) private var store
     @Environment(HingeEngine.self) private var hinge
+    @Environment(ShipComputer.self) private var ship
 
     @State private var appearedAt = Date()
 
@@ -73,6 +74,27 @@ struct AndromedaFinaleView: View {
                         .foregroundStyle(.white.opacity(0.8))
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
+                    if let entry = ship.commandersLogText {
+                        VStack(spacing: 4) {
+                            Text(ship.lastSource == .openAI
+                                 ? "COMMANDER'S LOG · SHIP COMPUTER · OPENAI"
+                                 : "COMMANDER'S LOG · SHIP COMPUTER · OFFLINE VOICE")
+                                .font(.mono(8, weight: .semibold))
+                                .kerning(1.5)
+                                .foregroundStyle(Theme.dim)
+                            Text(entry)
+                                .font(.mono(10))
+                                .foregroundStyle(Theme.accent)
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.top, 2)
+                    } else if ship.isThinking {
+                        Text("SHIP COMPUTER · COMPOSING THE COMMANDER'S LOG…")
+                            .font(.mono(8, weight: .semibold))
+                            .kerning(1.5)
+                            .foregroundStyle(Theme.dim)
+                    }
                 }
                 .padding(14)
                 .frame(maxWidth: .infinity)
@@ -129,6 +151,8 @@ struct AndromedaFinaleView: View {
         .onAppear {
             appearedAt = Date()
             Haptics.success()
+            let snapshot = store.save
+            Task { await ship.commandersLog(save: snapshot) }
         }
     }
 

@@ -6,6 +6,7 @@ import SwiftUI
 struct ConsoleView: View {
     @Environment(GameStore.self) private var store
     @Environment(HingeEngine.self) private var hinge
+    @Environment(ShipComputer.self) private var ship
 
     // Probe drag
     @State private var probeOffset: CGSize = .zero
@@ -17,6 +18,9 @@ struct ConsoleView: View {
     @State private var callsignDraft = ""
     @State private var confirmReset = false
 
+    // Ship computer
+    @State private var question = ""
+
     var body: some View {
         GeometryReader { geo in
             let consoleHeight = geo.size.height
@@ -27,6 +31,7 @@ struct ConsoleView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 8) {
                         scanPanel
+                        shipComputerPanel
                         drivePanel
                         systemsPanel
                         hullPanel
@@ -281,6 +286,86 @@ struct ConsoleView: View {
             }
         }
         return parts.joined(separator: " · ")
+    }
+
+    // MARK: - (2b) Ship computer (OpenAI chat completions · deterministic offline voice without a key)
+
+    private var shipComputerPanel: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                sectionHeader("SHIP COMPUTER", symbol: "terminal")
+                Spacer()
+                if ship.isThinking {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(Theme.accent)
+                }
+                Text(ship.statusLine)
+                    .font(.mono(8, weight: .semibold))
+                    .foregroundStyle(ship.isOnline ? Theme.gain : Theme.dim)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            if ship.transcript.isEmpty {
+                CockpitCaption("Ask about \(store.currentBody.name), or request an arrival narration.")
+            }
+            ForEach(Array(ship.transcript.suffix(3))) { line in
+                HStack(alignment: .top, spacing: 6) {
+                    Text(line.role == .ship ? "▌" : "▸")
+                        .font(.mono(9))
+                        .foregroundStyle(line.role == .ship ? Theme.accent : Theme.dim)
+                    Text(line.text)
+                        .font(.mono(9.5))
+                        .foregroundStyle(line.role == .ship ? Color.white.opacity(0.9) : Theme.dim)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            HStack(spacing: 6) {
+                TextField("Ask the ship computer…", text: $question)
+                    .font(.mono(10))
+                    .foregroundStyle(Color.white.opacity(0.9))
+                    .textFieldStyle(.plain)
+                    .autocorrectionDisabled()
+                    .submitLabel(.send)
+                    .onSubmit { askShip() }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(Color.white.opacity(0.04))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .strokeBorder(Theme.accent.opacity(0.35), lineWidth: 1)
+                    )
+                Button("ASK") { askShip() }
+                    .buttonStyle(.cockpit(Theme.accent, size: 9))
+                    .disabled(ship.isThinking || question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                Button("NARRATE") { narrateArrival() }
+                    .buttonStyle(.cockpit(Theme.accent, filled: true, size: 9))
+                    .disabled(ship.isThinking)
+            }
+        }
+        .cockpitPanel()
+    }
+
+    private func askShip() {
+        let q = question.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty, !ship.isThinking else { return }
+        question = ""
+        Haptics.tap()
+        let body = store.currentBody
+        let system = store.currentSystem
+        Task { await ship.answer(q, body: body, system: system) }
+    }
+
+    private func narrateArrival() {
+        guard !ship.isThinking else { return }
+        Haptics.tap()
+        let body = store.currentBody
+        let system = store.currentSystem
+        let act = store.act
+        Task { await ship.narrateArrival(body: body, system: system, act: act) }
     }
 
     // MARK: - (4)+(5) Drive status + target picker

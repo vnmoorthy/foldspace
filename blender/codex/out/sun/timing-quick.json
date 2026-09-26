@@ -1,0 +1,8 @@
+{
+  "mode": "quick",
+  "seconds": 2.8,
+  "cycles_samples": 8,
+  "adaptive_min_samples": 4,
+  "colour_management": "AgX, Medium High Contrast",
+  "threads": 2
+}

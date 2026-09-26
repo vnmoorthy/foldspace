@@ -121,6 +121,7 @@ final class GameStore {
 
     func log(_ text: String, _ kind: LogEntry.Kind = .info) {
         save.log.append(LogEntry(text: text, kind: kind))
+        Telemetry.breadcrumb(text, category: kind.rawValue)
         if save.log.count > 60 { save.log.removeFirst(save.log.count - 60) }
         toast = text
         persist()

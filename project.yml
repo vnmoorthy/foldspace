@@ -15,12 +15,22 @@ settings:
     # Add DUO_SDK here (or in Xcode 27.1: Build Settings → Active Compilation Conditions)
     # to enable the native iPhone Duo hinge path in Hinge/HingeSourceModifier.swift.
     SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited)"
+# Sponsor SDKs (Swift Package Manager). Sentry is a no-op until SENTRY_DSN is set in Secrets.plist.
+packages:
+  Sentry:
+    url: https://github.com/getsentry/sentry-cocoa
+    from: 8.0.0
 targets:
   Foldspace:
     type: application
     platform: iOS
     sources:
+      # Everything under Foldspace/, including Secrets.example.plist and (if present) the gitignored
+      # Secrets.plist, which XcodeGen bundles as resources. Re-run `xcodegen generate` after creating it.
       - path: Foldspace
+    dependencies:
+      - package: Sentry
+        product: Sentry
     info:
       path: Foldspace/Info.plist
       properties:

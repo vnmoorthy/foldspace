@@ -3,30 +3,26 @@ import Observation
 
 // MARK: - Configuration
 //
-// The Galactic Registry is a Butterbase app. Its `events` table is exposed through the
-// auto-generated REST API at `<host>/v1/<appID>/<table>` (see backend/README.md for the
-// schema and curl examples). The app runs in `public` access mode, so anonymous inserts and
-// selects need no API key, anon token or Authorization header.
-//
-// HOW TO POINT THE GAME AT ANOTHER APP: copy the `app_id` returned by Butterbase `init_app`
-// into `appID` below (and update `dashboardURL`). That is the only edit needed. Change `host`
-// only for a self-hosted Butterbase. If you ever switch the app to `authenticated` access
-// mode, put a bearer token into `authorizationHeader` ("Bearer bb_sk_...").
+// The Galactic Registry is a Supabase project: one Postgres table, `public.events`, exposed through
+// PostgREST at `<SUPABASE_URL>/rest/v1/events`. Row-level security lets the anon role INSERT and
+// SELECT and nothing else (supabase/migrations/20260926000000_events.sql). The URL and anon key come
+// from Secrets.plist via `Secrets`; with no credentials the registry is simply offline and the game
+// plays exactly the same. Setup, schema and curl examples: supabase/README.md.
 enum RegistryConfig {
-    static let host = "https://api.butterbase.ai"
-    static let appID = "app_a7c3jfpp8stm"
     static let table = "events"
-    static let dashboardURL = "https://dragnet.butterbase.dev"
-    static let authorizationHeader: String? = nil
-    /// How many recent events `refresh()` pulls (and the dashboard shows).
+    /// Rows shown in feeds (HUD + docs/registry.html).
     static let recentLimit = 25
+    /// Rows pulled per refresh; the stat tiles are computed in-app from this window.
+    static let statsWindow = 500
     /// Per-request timeout. Short on purpose: the game never waits on the network.
     static let timeout: TimeInterval = 8
-    /// Failed inserts are queued in memory and retried on the next `refresh()`.
+    /// Failed inserts are queued in memory (bounded) and retried on the next send or refresh.
     static let maxPending = 50
+    /// UserDefaults key for the device-scoped callsign used while the save still says "COMMANDER".
+    static let callsignKey = "foldspace.registry.callsign"
+    static let placeholderCallsign = "COMMANDER"
 
-    static var apiBase: String { "\(host)/v1/\(appID)" }
-    static var eventsEndpoint: String { "\(apiBase)/\(table)" }
+    static var eventsEndpoint: String { "\(Secrets.supabaseURL)/rest/v1/\(table)" }
 }
 
 // MARK: - Wire types (must match the `events` table)
@@ -107,14 +103,14 @@ struct GalacticStats: Codable, Sendable {
 extension GalacticStats {
     static let empty = GalacticStats(commanders: 0, claimed: 0, destroyed: 0, andromedaArrivals: 0, recent: [])
 
-    /// Derives the tiles from a page of entries (the latest `RegistryConfig.recentLimit`).
-    static func compute(from entries: [RegistryEntry]) -> GalacticStats {
+    /// Derives the tiles from a window of entries (newest first); `recent` keeps the first `recentLimit`.
+    static func compute(from window: [RegistryEntry]) -> GalacticStats {
         GalacticStats(
-            commanders: Set(entries.map(\.callsign)).count,
-            claimed: entries.filter { $0.event == .claimed }.count,
-            destroyed: entries.filter { $0.event == .destroyed }.count,
-            andromedaArrivals: entries.filter { $0.event == .reachedAndromeda }.count,
-            recent: entries
+            commanders: Set(window.map(\.callsign)).count,
+            claimed: window.filter { $0.event == .claimed }.count,
+            destroyed: window.filter { $0.event == .destroyed }.count,
+            andromedaArrivals: window.filter { $0.event == .reachedAndromeda }.count,
+            recent: Array(window.prefix(RegistryConfig.recentLimit))
         )
     }
 }
@@ -154,12 +150,14 @@ enum RegistryDates {
 }
 
 enum RegistryError: LocalizedError {
+    case notConfigured
     case badURL
     case http(Int, String)
     case badPayload
 
     var errorDescription: String? {
         switch self {
+        case .notConfigured: return "Supabase URL / anon key missing from Secrets.plist."
         case .badURL: return "Registry URL is malformed."
         case .http(let code, let body): return "Registry HTTP \(code)\(body.isEmpty ? "" : ": \(body)")"
         case .badPayload: return "Registry returned an unexpected payload."
@@ -169,13 +167,14 @@ enum RegistryError: LocalizedError {
 
 // MARK: - Client
 
-/// Talks to the Galactic Registry backend. Fully optional: every call degrades to
-/// `isOnline == false` and the game keeps running offline.
+/// Talks to the Galactic Registry (Supabase PostgREST). Fully optional: every call degrades to
+/// `isOnline == false` and the game keeps running offline. Local events are echoed into `stats`
+/// immediately so the HUD feed reacts before (or without) the network.
 @MainActor
 @Observable
 final class GalacticRegistry {
     var stats: GalacticStats?
-    var isOnline: Bool = true
+    var isOnline: Bool
     var callsign: String
 
     private(set) var lastSyncedAt: Date?
@@ -183,12 +182,16 @@ final class GalacticRegistry {
     private(set) var pendingCount: Int = 0
     private(set) var isRefreshing = false
 
+    /// Last fetched window (newest first) plus optimistic local echoes.
+    @ObservationIgnored private var window: [RegistryEntry] = []
     @ObservationIgnored private var pending: [Payload] = []
+    @ObservationIgnored private var isFlushing = false
     @ObservationIgnored private var pollTask: Task<Void, Never>?
     @ObservationIgnored private let session: URLSession
     @ObservationIgnored private let encoder = JSONEncoder()
     @ObservationIgnored private let decoder = JSONDecoder()
 
+    /// Exactly the columns the anon INSERT accepts (`id` / `created_at` are server defaults).
     private struct Payload: Codable, Sendable {
         var callsign: String
         var event: String
@@ -226,14 +229,9 @@ final class GalacticRegistry {
         }
     }
 
-    private struct Envelope: Decodable {
-        var data: [RawRow]?
-        var rows: [RawRow]?
-        var items: [RawRow]?
-    }
-
     init(callsign: String) {
-        self.callsign = callsign
+        self.callsign = Self.resolveCallsign(callsign)
+        self.isOnline = Secrets.hasSupabase
         let cfg = URLSessionConfiguration.ephemeral
         cfg.timeoutIntervalForRequest = RegistryConfig.timeout
         cfg.timeoutIntervalForResource = RegistryConfig.timeout * 2
@@ -246,8 +244,12 @@ final class GalacticRegistry {
         pollTask?.cancel()
     }
 
+    /// True when Secrets.plist carries a Supabase URL + anon key.
+    var isConfigured: Bool { Secrets.hasSupabase }
+
     /// One-line HUD readout.
     var statusLine: String {
+        if !Secrets.hasSupabase { return "REGISTRY OFFLINE · NO SUPABASE KEYS" }
         if !isOnline {
             return pendingCount > 0 ? "REGISTRY OFFLINE · \(pendingCount) QUEUED" : "REGISTRY OFFLINE"
         }
@@ -255,58 +257,87 @@ final class GalacticRegistry {
         return "REGISTRY ONLINE"
     }
 
+    // MARK: Callsign
+
+    /// A save that still says "COMMANDER" gets a device-scoped callsign ("NOVA-4821"), generated once
+    /// and kept in UserDefaults so the registry can tell commanders apart. Custom callsigns pass through.
+    private static func resolveCallsign(_ requested: String) -> String {
+        let trimmed = requested.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty, trimmed.uppercased() != RegistryConfig.placeholderCallsign {
+            return trimmed
+        }
+        let defaults = UserDefaults.standard
+        if let saved = defaults.string(forKey: RegistryConfig.callsignKey), !saved.isEmpty {
+            return saved
+        }
+        let generated = generateCallsign()
+        defaults.set(generated, forKey: RegistryConfig.callsignKey)
+        return generated
+    }
+
+    static func generateCallsign() -> String {
+        let stars = ["NOVA", "VEGA", "LYRA", "RIGEL", "DENEB", "ALTAIR", "SPICA", "MIRA", "ATLAS", "HELIX", "ORION", "DRACO"]
+        let star = stars.randomElement() ?? "NOVA"
+        return "\(star)-\(Int.random(in: 1000...9999))"
+    }
+
     // MARK: Record (fire-and-forget)
 
-    /// Posts an event. Returns immediately; the game never waits on the network.
-    /// On failure the event is queued (bounded) and retried by the next `refresh()`.
+    /// Posts an event. Returns immediately; the game never waits on the network. The entry is echoed
+    /// into the local feed at once; on failure it stays queued (bounded) and is retried by the next
+    /// `record` or `refresh`.
     func record(_ event: RegistryEvent, body: String, energy: Int) {
         let payload = Payload(callsign: callsign, event: event.rawValue, body: body, energy: energy)
+        echo(payload)
+        guard Secrets.hasSupabase else {
+            isOnline = false
+            return
+        }
+        enqueue(payload)
         Task { [weak self] in
-            await self?.send(payload)
+            await self?.flushPending()
         }
     }
 
-    private func send(_ payload: Payload) async {
-        do {
-            try await post(payload)
-            isOnline = true
-            lastError = nil
-            echo(payload)
-        } catch {
-            markOffline(error)
-            if pending.count < RegistryConfig.maxPending {
-                pending.append(payload)
-                pendingCount = pending.count
-            }
+    private func enqueue(_ payload: Payload) {
+        pending.append(payload)
+        if pending.count > RegistryConfig.maxPending {
+            pending.removeFirst(pending.count - RegistryConfig.maxPending)
         }
+        pendingCount = pending.count
     }
 
     /// Optimistic local echo so the HUD feed updates before the next refresh.
     private func echo(_ p: Payload) {
         guard let event = RegistryEvent(rawValue: p.event) else { return }
-        var recent = stats?.recent ?? []
-        recent.insert(RegistryEntry(id: UUID().uuidString, callsign: p.callsign, event: event,
-                                    body: p.body, energy: p.energy,
-                                    created_at: RegistryDates.string(from: Date())), at: 0)
-        if recent.count > RegistryConfig.recentLimit {
-            recent.removeLast(recent.count - RegistryConfig.recentLimit)
+        let entry = RegistryEntry(id: "local-\(UUID().uuidString)", callsign: p.callsign, event: event,
+                                  body: p.body, energy: p.energy,
+                                  created_at: RegistryDates.string(from: Date()))
+        window.insert(entry, at: 0)
+        if window.count > RegistryConfig.statsWindow {
+            window.removeLast(window.count - RegistryConfig.statsWindow)
         }
-        stats = GalacticStats.compute(from: recent)
+        stats = GalacticStats.compute(from: window)
     }
 
     // MARK: Refresh
 
-    /// Flushes queued inserts, then pulls the latest `recentLimit` events and recomputes stats.
+    /// Flushes queued inserts, then pulls the latest `statsWindow` events and recomputes the tiles.
     func refresh() async {
+        guard Secrets.hasSupabase else {
+            isOnline = false
+            lastError = RegistryError.notConfigured.localizedDescription
+            return
+        }
         guard !isRefreshing else { return }
         isRefreshing = true
         defer { isRefreshing = false }
         await flushPending()
         do {
-            let entries = try await fetchRecent()
-            stats = GalacticStats.compute(from: entries)
-            isOnline = true
-            lastError = nil
+            let rows = try await fetchWindow()
+            window = rows
+            stats = GalacticStats.compute(from: rows)
+            markOnline()
             lastSyncedAt = Date()
         } catch {
             markOffline(error)
@@ -330,12 +361,17 @@ final class GalacticRegistry {
         pollTask = nil
     }
 
+    /// Posts queued payloads in order; stops at the first failure and leaves the rest queued.
     private func flushPending() async {
+        guard !isFlushing else { return }
+        isFlushing = true
+        defer { isFlushing = false }
         while let next = pending.first {
             do {
                 try await post(next)
-                pending.removeFirst()
+                if !pending.isEmpty { pending.removeFirst() }
                 pendingCount = pending.count
+                markOnline()
             } catch {
                 markOffline(error)
                 return
@@ -343,19 +379,25 @@ final class GalacticRegistry {
         }
     }
 
+    private func markOnline() {
+        isOnline = true
+        lastError = nil
+    }
+
     private func markOffline(_ error: Error) {
         isOnline = false
         lastError = error.localizedDescription
+        Telemetry.breadcrumb("Registry offline: \(error.localizedDescription)", category: "registry")
     }
 
-    // MARK: HTTP
+    // MARK: HTTP (Supabase PostgREST)
 
-    private func fetchRecent() async throws -> [RegistryEntry] {
+    private func fetchWindow() async throws -> [RegistryEntry] {
         guard var comps = URLComponents(string: RegistryConfig.eventsEndpoint) else { throw RegistryError.badURL }
         comps.queryItems = [
             URLQueryItem(name: "select", value: "id,callsign,event,body,energy,created_at"),
             URLQueryItem(name: "order", value: "created_at.desc"),
-            URLQueryItem(name: "limit", value: String(RegistryConfig.recentLimit)),
+            URLQueryItem(name: "limit", value: String(RegistryConfig.statsWindow)),
         ]
         guard let url = comps.url else { throw RegistryError.badURL }
         var request = URLRequest(url: url)
@@ -373,15 +415,16 @@ final class GalacticRegistry {
         request.httpBody = try encoder.encode(payload)
         applyHeaders(&request)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("return=minimal", forHTTPHeaderField: "Prefer")
         let (data, response) = try await session.data(for: request)
         try Self.check(response, data)
     }
 
     private func applyHeaders(_ request: inout URLRequest) {
+        request.timeoutInterval = RegistryConfig.timeout
+        request.setValue(Secrets.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(Secrets.supabaseAnonKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        if let auth = RegistryConfig.authorizationHeader, !auth.isEmpty {
-            request.setValue(auth, forHTTPHeaderField: "Authorization")
-        }
     }
 
     private static func check(_ response: URLResponse, _ data: Data) throws {
@@ -392,17 +435,9 @@ final class GalacticRegistry {
         }
     }
 
-    /// Accepts a bare JSON array or `{ "data" | "rows" | "items": [...] }`.
+    /// PostgREST returns a bare JSON array of rows.
     private func decodeRows(_ data: Data) throws -> [RegistryEntry] {
-        let rows: [RawRow]
-        if let array = try? decoder.decode([RawRow].self, from: data) {
-            rows = array
-        } else if let env = try? decoder.decode(Envelope.self, from: data),
-                  let inner = env.data ?? env.rows ?? env.items {
-            rows = inner
-        } else {
-            throw RegistryError.badPayload
-        }
+        guard let rows = try? decoder.decode([RawRow].self, from: data) else { throw RegistryError.badPayload }
         return rows.compactMap(Self.entry(from:))
     }
 

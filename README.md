@@ -11,14 +11,15 @@
   <a href="docs/ARCHITECTURE.md">Architecture</a> ·
   <a href="docs/FOLDSPACE-Deck.pptx">Slide deck</a> ·
   <a href="docs/PRESENTATION-SCRIPT.md">3-minute script</a> ·
-  <a href="backend/README.md">Galactic Registry backend</a>
+  <a href="supabase/README.md">Supabase registry</a> ·
+  <a href="docs/registry.html">Live dashboard</a>
 </p>
 
 <p align="center">
   <img alt="Platform" src="https://img.shields.io/badge/platform-iPhone%20Duo%20%C2%B7%20iOS%2027-3DF2FF?style=flat-square&labelColor=05070F">
   <img alt="Swift" src="https://img.shields.io/badge/Swift-5%20%2F%206.2-F05138?style=flat-square&labelColor=05070F">
   <img alt="SwiftUI" src="https://img.shields.io/badge/SwiftUI-%2B%20SceneKit-4DFF9A?style=flat-square&labelColor=05070F">
-  <img alt="Backend" src="https://img.shields.io/badge/backend-Butterbase-FFB238?style=flat-square&labelColor=05070F">
+  <img alt="Sponsor stack" src="https://img.shields.io/badge/sponsors-Supabase%20%C2%B7%20OpenAI%20%C2%B7%20Sentry-FFB238?style=flat-square&labelColor=05070F">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-6B7A99?style=flat-square&labelColor=05070F">
 </p>
 
@@ -106,9 +107,33 @@ Every planet has a real blurb and real facts in [`UniverseData.swift`](Foldspace
 
 **Build-flag note.** Xcode 27.1 beta (the first SDK with the Duo APIs) requires macOS 26.6+; the build machine at the hackathon was on 26.5. The native hinge path is behind the `DUO_SDK` compilation condition in `project.yml` and `HingeSourceModifier.swift`, so the same engine runs from three sources: the Duo hinge, an on-screen hinge control in the simulator, or CoreMotion tilt on a flat iPhone. Flip the flag on Xcode 27.1 and the Duo simulator drives the game directly.
 
-## Galactic Registry (backend)
+## Sponsor stack: Supabase · OpenAI · Sentry
 
-Every beacon, every destroyed world, every warp and every Andromeda arrival is posted to the **Galactic Registry**, a Butterbase backend with a live web dashboard. The game is fully playable offline; the registry is fire-and-forget. See [`backend/README.md`](backend/README.md) for the schema, endpoints and dashboard URL.
+Three hackathon sponsor tools power everything outside the phone. All three are **optional**: with no keys the game runs fully offline and every feature still works — the registry reports `OFFLINE`, the ship computer speaks with a deterministic voice built from the same real facts, and telemetry is a no-op.
+
+| Tool | What it does in FOLDSPACE | Code |
+|---|---|---|
+| **Supabase** (Postgres + PostgREST) | The **Galactic Registry**. Every beacon, destroyed world, warp, core sample, slingshot and Andromeda arrival is `POST`ed to `public.events`; the HUD and the [live dashboard](docs/registry.html) read it back. Row-level security allows anon INSERT + SELECT and nothing else. Fire-and-forget with an in-memory retry queue and an optimistic local echo. | [`Network/GalacticRegistry.swift`](Foldspace/Network/GalacticRegistry.swift) · [`supabase/`](supabase/README.md) |
+| **OpenAI** (chat completions, `gpt-5-mini` by default) | The **ship computer** in the console: **NARRATE** the arrival at the current body, **ASK** it anything about that body, and the **Commander's Log** on the Andromeda finale. The model gets a strict system prompt (≤ 2 sentences, never invent numbers) and only the body's real blurb + facts as source material. 12 s timeout, then the offline voice. | [`AI/ShipComputer.swift`](Foldspace/AI/ShipComputer.swift) · [`UI/Cockpit/ConsoleView.swift`](Foldspace/UI/Cockpit/ConsoleView.swift) |
+| **Sentry** (sentry-cocoa via SwiftPM) | Crash + error monitoring with automatic performance tracing. Every `GameStore.log` line becomes a breadcrumb, so a crash report carries the last 60 game events; OpenAI API errors are captured as handled errors. | [`Config/Telemetry.swift`](Foldspace/Config/Telemetry.swift) · [`App/FoldspaceApp.swift`](Foldspace/App/FoldspaceApp.swift) |
+
+### Keys · `Foldspace/Secrets.plist`
+
+```bash
+cp Foldspace/Secrets.example.plist Foldspace/Secrets.plist   # gitignored — never committed
+open Foldspace/Secrets.plist                                 # fill in what you have
+xcodegen generate                                            # once, so Xcode bundles the new resource
+```
+
+| Key | Where to get it | Empty means |
+|---|---|---|
+| `SUPABASE_URL` | Supabase → Project Settings → API → Project URL | registry offline |
+| `SUPABASE_ANON_KEY` | same page → `anon` `public` key | registry offline |
+| `OPENAI_API_KEY` | platform.openai.com → API keys (API credits, not a ChatGPT plan) | ship computer uses the offline voice |
+| `OPENAI_MODEL` | any chat-completions model id | `gpt-5-mini` |
+| `SENTRY_DSN` | sentry.io → Project → Settings → Client Keys (DSN) | Sentry never starts |
+
+[`Config/Secrets.swift`](Foldspace/Config/Secrets.swift) reads `Secrets.plist`, falls back to `Secrets.example.plist` (all empty), and lets a `FOLDSPACE_<KEY>` environment variable override either — handy in the simulator. Database schema, RLS policies, seed rows and curl examples live in [`supabase/README.md`](supabase/README.md).
 
 ## Architecture
 
@@ -130,7 +155,13 @@ flowchart LR
     RV --> GM["GalaxyMapView\n(flat)"]
     RV --> SQ["Sequences\nWarp · SunDive · Weapon\nBlackHole · Andromeda"]
     CK --> SC["SpaceScene (SceneKit)\nprocedural materials · hologram camera\nwarp particles · shatter"]
-    GS --> GR["GalacticRegistry\nURLSession"] --> BB["Butterbase\nevents table + dashboard"]
+    GS --> GR["GalacticRegistry\nURLSession · retry queue"] --> SB["Supabase (PostgREST)\npublic.events · RLS anon"]
+    SB --> DASH["docs/registry.html\nlive dashboard"]
+    CK --> SHIP["ShipComputer\nnarrate · ask · log"] --> OAI["OpenAI\nchat completions"]
+    GS --> TM["Telemetry\nbreadcrumbs"] --> SEN["Sentry\ncrashes · performance"]
+    SEC["Secrets.plist\n(gitignored)"] -.-> GR
+    SEC -.-> SHIP
+    SEC -.-> TM
     UD["UniverseData\nreal star & planet catalog"] --> GS
 ```
 
@@ -138,20 +169,24 @@ A deeper walkthrough with a warp-jump sequence diagram is in [`docs/ARCHITECTURE
 
 ```
 Foldspace/
-├── App/          FoldspaceApp, RootView
+├── App/          FoldspaceApp (Sentry start · environment wiring), RootView
+├── Config/       Secrets (Secrets.plist loader), Telemetry (Sentry breadcrumbs / captures)
 ├── Hinge/        HingeState, HingeEngine, HingeSourceModifier (DUO_SDK), HingeSimulatorControl
 ├── Game/         GameStore, FlightController
 ├── Universe/     Universe (models), UniverseData (catalog)
 ├── Scene/        SpaceScene, PlanetMaterials, SceneViewport
+├── AI/           ShipComputer (OpenAI chat completions + deterministic offline voice)
+├── Network/      GalacticRegistry (Supabase PostgREST client, retry queue)
 ├── UI/
-│   ├── Cockpit/  CockpitView, ConsoleView, HUDOverlay
+│   ├── Cockpit/  CockpitView, ConsoleView (SHIP COMPUTER panel), HUDOverlay
 │   ├── GalaxyMap/GalaxyMapView
 │   ├── Outer/    OuterDisplayView
-│   ├── Sequences/WarpSequenceView, SunDiveView, WeaponView, BlackHoleView, AndromedaFinaleView, ShipLostView
+│   ├── Sequences/WarpSequenceView, SunDiveView, WeaponView, BlackHoleView, AndromedaFinaleView (Commander's Log), ShipLostView
 │   └── Components/Theme, Haptics, FoldSeam
-└── Network/      GalacticRegistry
-backend/          Butterbase schema, dashboard, curl examples
-docs/             landing page, hero, architecture, deck, script, screenshots
+├── Secrets.example.plist   template — copy to Secrets.plist (gitignored)
+└── Info.plist
+supabase/         migrations/ (events table · RLS · galactic_stats view), seed.sql, README (setup + curl)
+docs/             registry.html (live dashboard), landing page, hero, architecture, deck, script, screenshots
 ```
 
 ## Run it
@@ -165,6 +200,8 @@ brew install xcodegen
 ```bash
 git clone https://github.com/vnmoorthy/foldspace.git && cd foldspace && xcodegen generate && open Foldspace.xcodeproj
 ```
+
+Optional: `cp Foldspace/Secrets.example.plist Foldspace/Secrets.plist`, fill in the Supabase / OpenAI / Sentry keys, and run `xcodegen generate` again — see [Sponsor stack](#sponsor-stack-supabase--openai--sentry).
 
 Pick any iPhone simulator and run. Use the hinge control at the bottom of the screen: **CLOSE**, **SLAM**, **HOP**, **SQUEEZE**, **SNAP**, **PUMP ×4**, or drag the lid yourself.
 

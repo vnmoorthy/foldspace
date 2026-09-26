@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Galactic Registry</title>
+<meta name="description" content="Live feed of FOLDSPACE commanders — beacons planted, worlds destroyed, warps and Andromeda arrivals — read straight from Supabase.">
+<style>
+  :root {
+    --bg: #05070F;
+    --panel: #0B1020;
+    --panel-2: #0F1629;
+    --accent: #3DF2FF;
+    --warn: #FFB238;
+    --danger: #FF3B5C;
+    --gain: #4DFF9A;
+    --dim: #6B7A99;
+    --ink: #F2F6FF;
+    --ink-2: #B7C2DC;
+    --line: rgba(61, 242, 255, 0.18);
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--mono); }
+  body { min-height: 100vh; padding: 24px 16px 56px; position: relative; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* starfield */
+  #stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  #stars i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #fff; opacity: .45; animation: twinkle 5s ease-in-out infinite; }
+  @keyframes twinkle { 0%, 100% { opacity: .2; } 50% { opacity: .85; } }
+  #glow { position: fixed; left: 50%; top: -30vh; width: 120vw; height: 70vh; transform: translateX(-50%); pointer-events: none; z-index: 0;
+          background: radial-gradient(ellipse at center, rgba(61,242,255,.10) 0%, rgba(61,242,255,0) 60%); }
+
+  main { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; }
+
+  header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+  .eyebrow { margin: 0 0 6px; font-size: 10px; letter-spacing: .3em; color: var(--dim); }
+  h1 { margin: 0; font-size: 24px; letter-spacing: .28em; font-weight: 800; color: var(--accent); text-shadow: 0 0 16px rgba(61,242,255,.55); }
+  .sub { margin: 8px 0 0; color: var(--dim); font-size: 11px; letter-spacing: .06em; line-height: 1.6; }
+  .headright { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .repo { font-size: 10px; letter-spacing: .12em; color: var(--dim); }
+  .repo:hover { color: var(--accent); }
+
+  .pill { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: .16em; font-weight: 700;
+          padding: 7px 11px; border: 1px solid var(--line); border-radius: 6px; background: rgba(11,16,32,.9); color: var(--ink-2); }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); box-shadow: 0 0 8px var(--dim); }
+  .pill.live .dot { background: var(--gain); box-shadow: 0 0 8px var(--gain); }
+  .pill.demo .dot { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+  .pill.error .dot { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+  .pill.live { border-color: rgba(77,255,154,.45); }
+  .pill.demo { border-color: rgba(255,178,56,.45); }
+  .pill.error { border-color: rgba(255,59,92,.45); }
+
+  /* demo banner + connect form */
+  .banner { margin-top: 16px; padding: 12px 14px; border: 1px dashed rgba(255,178,56,.55); border-radius: 8px; background: rgba(255,178,56,.06); color: var(--ink-2); font-size: 11px; line-height: 1.65; }
+  .banner strong { color: var(--warn); letter-spacing: .12em; }
+  .banner code { color: var(--accent); }
+  .connect { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; margin-top: 10px; }
+  .connect input { width: 100%; font: inherit; font-size: 11px; color: var(--ink); background: rgba(255,255,255,.04); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; outline: none; }
+  .connect input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(61,242,255,.18); }
+  .btn { font: inherit; font-size: 10px; letter-spacing: .14em; font-weight: 700; color: var(--accent); background: rgba(61,242,255,.08);
+         border: 1px solid rgba(61,242,255,.6); border-radius: 6px; padding: 8px 14px; cursor: pointer; }
+  .btn:hover { background: rgba(61,242,255,.18); }
+  .btn:active { transform: scale(.98); }
+  .banner.error { border-color: rgba(255,59,92,.55); background: rgba(255,59,92,.06); }
+  .banner.error strong { color: var(--danger); }
+
+  /* stat tiles */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 18px; }
+  .tile { position: relative; padding: 14px 14px 12px; background: rgba(11,16,32,.85); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .tile::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--tile-accent, var(--accent)); opacity: .8; }
+  .tile .label { display: flex; align-items: center; gap: 6px; font-size: 9px; letter-spacing: .18em; color: var(--dim); font-weight: 600; }
+  .tile .label .glyph { color: var(--tile-accent, var(--accent)); font-size: 11px; line-height: 1; }
+  .tile .value { margin-top: 8px; font-size: 30px; font-weight: 800; letter-spacing: -.01em; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1; text-shadow: 0 0 18px rgba(61,242,255,.25); }
+  .tile .value.small { font-size: 16px; margin-top: 12px; }
+  .tile .note { margin-top: 6px; font-size: 9px; letter-spacing: .06em; color: var(--dim); }
+  .tile.destroyed { --tile-accent: var(--danger); }
+  .tile.claimed { --tile-accent: var(--gain); }
+  .tile.andromeda { --tile-accent: #FFFFFF; }
+  .tile.events { --tile-accent: var(--dim); }
+  .tile.last { --tile-accent: var(--warn); }
+
+  /* feed */
+  section.feed { margin-top: 20px; background: rgba(11,16,32,.85); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .feedhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  .feedhead h2 { margin: 0; font-size: 11px; letter-spacing: .24em; color: var(--accent); font-weight: 700; }
+  .feedhead .meta { font-size: 9px; letter-spacing: .12em; color: var(--dim); text-align: right; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  thead th { text-align: left; font-size: 9px; letter-spacing: .18em; color: var(--dim); font-weight: 600; padding: 8px 14px; border-bottom: 1px solid rgba(61,242,255,.08); }
+  tbody td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr.fresh { animation: flash 1.6s ease-out; }
+  @keyframes flash { 0% { background: rgba(61,242,255,.16); } 100% { background: transparent; } }
+  td.time { color: var(--dim); white-space: nowrap; width: 84px; font-variant-numeric: tabular-nums; }
+  td.who { color: var(--ink); font-weight: 700; white-space: nowrap; letter-spacing: .04em; }
+  td.what { color: var(--ink-2); line-height: 1.55; }
+  td.what .body { color: var(--ink); }
+  td.energy { text-align: right; white-space: nowrap; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  td.energy::before { content: "⚡ "; color: var(--gain); }
+  .chip { display: inline-flex; align-items: center; gap: 5px; margin-right: 8px; padding: 2px 7px; border-radius: 4px; font-size: 9px; letter-spacing: .14em; font-weight: 700;
+          border: 1px solid var(--chip, var(--dim)); color: var(--chip, var(--dim)); background: color-mix(in srgb, var(--chip, var(--dim)) 10%, transparent); vertical-align: 1px; }
+  .chip.claimed { --chip: var(--gain); }
+  .chip.destroyed { --chip: var(--danger); }
+  .chip.warped { --chip: var(--accent); }
+  .chip.driveAssembled { --chip: var(--warn); }
+  .chip.coreSample { --chip: var(--warn); }
+  .chip.passedBlackHole { --chip: var(--accent); }
+  .chip.reachedAndromeda { --chip: #FFFFFF; }
+  tr.empty td { text-align: center; color: var(--dim); padding: 28px 14px; letter-spacing: .1em; }
+
+  footer { margin-top: 18px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; font-size: 9px; letter-spacing: .12em; color: var(--dim); }
+
+  @media (max-width: 640px) {
+    h1 { font-size: 20px; letter-spacing: .2em; }
+    .headright { align-items: flex-start; }
+    .connect { grid-template-columns: 1fr; }
+    thead { display: none; }
+    tbody tr { display: grid; grid-template-columns: 1fr auto; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.04); }
+    tbody td { padding: 0; border-bottom: none; }
+    td.time { grid-column: 1; order: 1; width: auto; font-size: 10px; }
+    td.energy { grid-column: 2; order: 2; }
+    td.who { grid-column: 1 / -1; order: 3; margin-top: 4px; }
+    td.what { grid-column: 1 / -1; order: 4; margin-top: 2px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #stars i, tbody tr.fresh { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div id="glow" aria-hidden="true"></div>
+<div id="stars" aria-hidden="true"></div>
+
+<main>
+  <header>
+    <div>
+      <p class="eyebrow">FOLDSPACE · BITRIG HACKS · iPHONE DUO EDITION</p>
+      <h1>GALACTIC REGISTRY</h1>
+      <p class="sub">Every beacon planted, every world shattered, every fold of space — posted live by every commander's ship.<br>Supabase Postgres · PostgREST · anon row-level security.</p>
+    </div>
+    <div class="headright">
+      <div id="status" class="pill" role="status" aria-live="polite"><span class="dot"></span><span id="statusText">CONNECTING…</span></div>
+      <a class="repo" href="https://github.com/vnmoorthy/foldspace" rel="noopener">github.com/vnmoorthy/foldspace ↗</a>
+    </div>
+  </header>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <section class="tiles" aria-label="Registry totals">
+    <div class="tile commanders"><div class="label"><span class="glyph" aria-hidden="true">◈</span>COMMANDERS</div><div class="value" id="t-commanders">—</div><div class="note">distinct callsigns</div></div>
+    <div class="tile claimed"><div class="label"><span class="glyph" aria-hidden="true">⚑</span>BEACONS PLANTED</div><div class="value" id="t-claimed">—</div><div class="note">worlds claimed</div></div>
+    <div class="tile destroyed"><div class="label"><span class="glyph" aria-hidden="true">✸</span>WORLDS DESTROYED</div><div class="value" id="t-destroyed">—</div><div class="note">Nova Lance firings</div></div>
+    <div class="tile andromeda"><div class="label"><span class="glyph" aria-hidden="true">✦</span>ANDROMEDA ARRIVALS</div><div class="value" id="t-andromeda">—</div><div class="note">2.5 M ly folds</div></div>
+    <div class="tile events"><div class="label"><span class="glyph" aria-hidden="true">≡</span>EVENTS</div><div class="value" id="t-events">—</div><div class="note" id="t-events-note">in window</div></div>
+    <div class="tile last"><div class="label"><span class="glyph" aria-hidden="true">◷</span>LAST EVENT</div><div class="value small" id="t-last" data-ts="">—</div><div class="note" id="t-last-note">&nbsp;</div></div>
+  </section>
+
+  <section class="feed" aria-label="Live event feed">
+    <div class="feedhead">
+      <h2>LIVE FEED</h2>
+      <div class="meta"><span id="refreshNote">REFRESH IN 5s</span><br><span id="updatedNote">&nbsp;</span></div>
+    </div>
+    <table>
+      <thead><tr><th scope="col">When</th><th scope="col">Commander</th><th scope="col">Event</th><th scope="col" style="text-align:right">Energy</th></tr></thead>
+      <tbody id="feed"><tr class="empty"><td colspan="4">LOADING…</td></tr></tbody>
+    </table>
+  </section>
+
+  <footer>
+    <span id="sourceNote">SOURCE: —</span>
+    <span>AUTO-REFRESH 5 s · WINDOW 500 EVENTS · FEED 25</span>
+    <span>Built at <a href="https://events.ycombinator.com/bitrig-hacks-september2026" rel="noopener">Bitrig Hacks</a> · <a href="https://github.com/vnmoorthy/foldspace" rel="noopener">FOLDSPACE on GitHub</a></span>
+  </footer>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // CONFIGURATION — paste your Supabase values here, OR open the page with
+  //   registry.html?url=https://abcdefgh.supabase.co&key=eyJ...
+  // The anon key is designed to ship in clients; row-level security protects the table.
+  // Leave both empty and the page shows a clearly labelled DEMO feed.
+  // ───────────────────────────────────────────────────────────────────────────
+  const CONFIG = {
+    SUPABASE_URL: "",        // e.g. "https://abcdefgh.supabase.co"
+    SUPABASE_ANON_KEY: "",   // Project Settings → API → anon public key
+  };
+
+  const REFRESH_MS = 5000;   // auto-refresh interval
+  const WINDOW = 500;        // rows fetched per refresh (stats are computed from these)
+  const FEED = 25;           // rows shown in the feed
+
+  const params = new URLSearchParams(location.search);
+  const SUPABASE_URL = (params.get("url") || CONFIG.SUPABASE_URL || "").trim().replace(/\/+$/, "");
+  const SUPABASE_KEY = (params.get("key") || CONFIG.SUPABASE_ANON_KEY || "").trim();
+  const DEMO = SUPABASE_URL === "";
+
+  // Event vocabulary (mirrors RegistryEvent in Foldspace/Network/GalacticRegistry.swift)
+  const EVENTS = {
+    claimed:          { glyph: "⚑", label: "CLAIMED",      verb: "planted a beacon on" },
+    destroyed:        { glyph: "✸", label: "DESTROYED",    verb: "shattered" },
+    warped:           { glyph: "⇄", label: "WARPED",       verb: "folded space to" },
+    driveAssembled:   { glyph: "⚙", label: "DRIVE ONLINE", verb: "assembled the warp drive at" },
+    coreSample:       { glyph: "☀", label: "CORE SAMPLE",  verb: "sampled the core of" },
+    passedBlackHole:  { glyph: "◎", label: "SLINGSHOT",    verb: "slingshot around" },
+    reachedAndromeda: { glyph: "✦", label: "ANDROMEDA",    verb: "reached" },
+  };
+
+  // Pretty names for the body ids the game records (unknown ids fall back to the id itself).
+  const NAMES = {
+    sun: "the Sun", mercury: "Mercury", venus: "Venus", earth: "Earth", mars: "Mars", jupiter: "Jupiter",
+    saturn: "Saturn", uranus: "Uranus", neptune: "Neptune",
+    "alpha-centauri": "Alpha Centauri", "alpha-cen-a": "Alpha Centauri A", "proxima-b": "Proxima b", "proxima-d": "Proxima d",
+    "barnards-star": "Barnard's Star", barnard: "Barnard's Star", "barnard-b": "Barnard b", "barnard-c": "Barnard c", "barnard-d": "Barnard d", "barnard-e": "Barnard e",
+    "wolf-359": "Wolf 359", "wolf-359-b": "Wolf 359 b", sirius: "Sirius", "sirius-a": "Sirius A", "sirius-b": "Sirius B",
+    "epsilon-eridani": "Epsilon Eridani", "eps-eri": "Epsilon Eridani", "eps-eri-b": "Epsilon Eridani b",
+    "tau-ceti": "Tau Ceti", "tau-ceti-e": "Tau Ceti e", "tau-ceti-f": "Tau Ceti f",
+    "trappist-1": "TRAPPIST-1", "trappist-1b": "TRAPPIST-1b", "trappist-1c": "TRAPPIST-1c", "trappist-1d": "TRAPPIST-1d",
+    "trappist-1e": "TRAPPIST-1e", "trappist-1f": "TRAPPIST-1f", "trappist-1g": "TRAPPIST-1g", "trappist-1h": "TRAPPIST-1h",
+    "sagittarius-a": "Sagittarius A*", "sgr-a-star": "Sagittarius A*", andromeda: "Andromeda", m31: "the Andromeda Galaxy",
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const el = {
+    status: $("status"), statusText: $("statusText"), banner: $("banner"), feed: $("feed"),
+    commanders: $("t-commanders"), claimed: $("t-claimed"), destroyed: $("t-destroyed"), andromeda: $("t-andromeda"),
+    events: $("t-events"), eventsNote: $("t-events-note"), last: $("t-last"), lastNote: $("t-last-note"),
+    refreshNote: $("refreshNote"), updatedNote: $("updatedNote"), sourceNote: $("sourceNote"),
+  };
+
+  let rows = [];
+  let seen = new Set();
+  let lastFetchAt = 0;
+  let nextFetchAt = Date.now();
+  let timer = null;
+
+  // ── helpers ────────────────────────────────────────────────────────────────
+  function parseISO(iso) {
+    if (!iso) return NaN;
+    // Postgres emits microseconds ("...00.123456+00:00"); some engines only parse 3 fractional digits.
+    return Date.parse(String(iso).replace(/(\.\d{3})\d+/, "$1"));
+  }
+  function rel(iso) {
+    const t = parseISO(iso);
+    if (Number.isNaN(t)) return "—";
+    const s = Math.max(0, Math.round((Date.now() - t) / 1000));
+    if (s < 5) return "now";
+    if (s < 60) return s + "s ago";
+    const m = Math.round(s / 60);
+    if (m < 60) return m + "m ago";
+    const h = Math.round(m / 60);
+    if (h < 48) return h + "h ago";
+    return Math.round(h / 24) + "d ago";
+  }
+  function absolute(iso) {
+    const t = parseISO(iso);
+    return Number.isNaN(t) ? "" : new Date(t).toLocaleString();
+  }
+  function bodyName(id) {
+    if (!id) return "unknown";
+    return NAMES[id] || String(id).replace(/-/g, " ");
+  }
+  function fmt(n) { return Number(n || 0).toLocaleString(); }
+  function setStatus(kind, text) {
+    el.status.className = "pill " + kind;
+    el.statusText.textContent = text;
+  }
+  function showBanner(html, kind) {
+    el.banner.className = "banner" + (kind ? " " + kind : "");
+    el.banner.innerHTML = html;   // static markup authored below — never user data
+    el.banner.hidden = false;
+  }
+
+  // ── demo data (only when no URL is configured) ─────────────────────────────
+  function demoRows() {
+    const now = Date.now();
+    const mk = (min, callsign, event, body, energy) => ({
+      id: "demo-" + min + "-" + callsign, callsign, event, body, energy,
+      created_at: new Date(now - min * 60000).toISOString(),
+    });
+    return [
+      mk(0.4, "NOVA-4821",  "claimed",          "proxima-b",      210),
+      mk(2,   "VEGA-0117",  "warped",           "trappist-1",     340),
+      mk(5,   "LYRA-9034",  "reachedAndromeda", "m31",            812),
+      mk(9,   "RIGEL-2210", "destroyed",        "mercury",         65),
+      mk(14,  "NOVA-4821",  "driveAssembled",   "neptune",        120),
+      mk(22,  "DENEB-7788", "coreSample",       "sun",            260),
+      mk(31,  "ALTAIR-0420","passedBlackHole",  "sgr-a-star",     590),
+      mk(47,  "VEGA-0117",  "claimed",          "earth",           25),
+      mk(63,  "MIRA-3141",  "destroyed",        "venus",           90),
+      mk(95,  "SPICA-8080", "warped",           "alpha-centauri", 180),
+      mk(140, "LYRA-9034",  "claimed",          "trappist-1e",    150),
+      mk(212, "ATLAS-6060", "claimed",          "mars",            40),
+    ];
+  }
+
+  // ── Supabase ───────────────────────────────────────────────────────────────
+  async function fetchEvents() {
+    const url = SUPABASE_URL + "/rest/v1/events?select=id,callsign,event,body,energy,created_at&order=created_at.desc&limit=" + WINDOW;
+    const res = await fetch(url, {
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "Accept": "application/json",
+      },
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      let detail = "";
+      try { const j = await res.json(); detail = j.message || j.hint || j.error || ""; } catch (_) { /* ignore */ }
+      throw new Error("HTTP " + res.status + (detail ? " — " + detail : ""));
+    }
+    const data = await res.json();
+    if (!Array.isArray(data)) throw new Error("Unexpected payload (expected a JSON array)");
+    return data;
+  }
+
+  // ── stats + render ─────────────────────────────────────────────────────────
+  function computeStats(list) {
+    const s = { commanders: new Set(list.map(r => r.callsign)).size, claimed: 0, destroyed: 0, andromeda: 0, events: list.length, last: list[0] ? list[0].created_at : null };
+    for (const r of list) {
+      if (r.event === "claimed") s.claimed++;
+      else if (r.event === "destroyed") s.destroyed++;
+      else if (r.event === "reachedAndromeda") s.andromeda++;
+    }
+    return s;
+  }
+
+  function renderTiles() {
+    const s = computeStats(rows);
+    el.commanders.textContent = fmt(s.commanders);
+    el.claimed.textContent = fmt(s.claimed);
+    el.destroyed.textContent = fmt(s.destroyed);
+    el.andromeda.textContent = fmt(s.andromeda);
+    el.events.textContent = fmt(s.events);
+    el.eventsNote.textContent = s.events >= WINDOW ? "last " + WINDOW + " (window full)" : "all recorded";
+    el.last.dataset.ts = s.last || "";
+    el.last.textContent = s.last ? rel(s.last) : "—";
+    el.lastNote.textContent = s.last ? absolute(s.last) : " ";
+  }
+
+  function makeChip(event) {
+    const meta = EVENTS[event] || { glyph: "•", label: String(event || "EVENT").toUpperCase(), verb: "logged" };
+    const chip = document.createElement("span");
+    chip.className = "chip " + (EVENTS[event] ? event : "");
+    const g = document.createElement("span"); g.setAttribute("aria-hidden", "true"); g.textContent = meta.glyph;
+    const l = document.createElement("span"); l.textContent = meta.label;
+    chip.append(g, l);
+    return chip;
+  }
+
+  function renderFeed(firstPaint) {
+    const list = rows.slice(0, FEED);
+    el.feed.replaceChildren();
+    if (list.length === 0) {
+      const tr = document.createElement("tr"); tr.className = "empty";
+      const td = document.createElement("td"); td.colSpan = 4; td.textContent = "NO EVENTS YET — PLAY A ROUND OF FOLDSPACE";
+      tr.appendChild(td); el.feed.appendChild(tr);
+      return;
+    }
+    const nextSeen = new Set();
+    for (const r of list) {
+      const key = r.id || (r.callsign + "|" + r.event + "|" + r.body + "|" + r.created_at);
+      nextSeen.add(key);
+      const meta = EVENTS[r.event] || { verb: "logged" };
+      const tr = document.createElement("tr");
+      if (!firstPaint && !seen.has(key)) tr.className = "fresh";
+
+      const tdTime = document.createElement("td"); tdTime.className = "time"; tdTime.dataset.ts = r.created_at || ""; tdTime.title = absolute(r.created_at); tdTime.textContent = rel(r.created_at);
+      const tdWho = document.createElement("td"); tdWho.className = "who"; tdWho.textContent = String(r.callsign || "UNKNOWN").slice(0, 24);
+      const tdWhat = document.createElement("td"); tdWhat.className = "what";
+      tdWhat.appendChild(makeChip(r.event));
+      tdWhat.appendChild(document.createTextNode(meta.verb + " "));
+      const body = document.createElement("span"); body.className = "body"; body.textContent = bodyName(String(r.body || "").slice(0, 64));
+      tdWhat.appendChild(body);
+      const tdEnergy = document.createElement("td"); tdEnergy.className = "energy"; tdEnergy.textContent = fmt(r.energy);
+
+      tr.append(tdTime, tdWho, tdWhat, tdEnergy);
+      el.feed.appendChild(tr);
+    }
+    seen = nextSeen;
+  }
+
+  function renderTimes() {
+    document.querySelectorAll("[data-ts]").forEach(node => {
+      const ts = node.dataset.ts;
+      if (ts) node.textContent = rel(ts);
+    });
+    const remaining = Math.max(0, Math.ceil((nextFetchAt - Date.now()) / 1000));
+    el.refreshNote.textContent = DEMO ? "DEMO · REFRESH IN " + remaining + "s" : "REFRESH IN " + remaining + "s";
+    if (lastFetchAt) el.updatedNote.textContent = "UPDATED " + rel(new Date(lastFetchAt).toISOString()).toUpperCase();
+  }
+
+  // ── refresh loop ───────────────────────────────────────────────────────────
+  let firstPaint = true;
+  async function refresh() {
+    try {
+      if (DEMO) {
+        rows = demoRows();
+        setStatus("demo", "DEMO FEED · NO SUPABASE URL");
+      } else {
+        rows = await fetchEvents();
+        setStatus("live", "LIVE · " + new URL(SUPABASE_URL).host);
+        el.banner.hidden = true;
+      }
+      lastFetchAt = Date.now();
+      renderTiles();
+      renderFeed(firstPaint);
+      firstPaint = false;
+    } catch (err) {
+      setStatus("error", "OFFLINE · " + (err && err.message ? err.message : "fetch failed"));
+      showBanner(
+        "<strong>CONNECTION FAILED</strong> — the last good data (if any) stays on screen and the page keeps retrying every 5 s.<br>" +
+        "Check the URL and anon key, that the <code>events</code> table exists (run <code>supabase/migrations/20260926000000_events.sql</code>), " +
+        "and that the anon SELECT policy is enabled.",
+        "error");
+      if (rows.length === 0) {
+        el.feed.replaceChildren();
+        const tr = document.createElement("tr"); tr.className = "empty";
+        const td = document.createElement("td"); td.colSpan = 4; td.textContent = "NO DATA — " + (err && err.message ? err.message : "fetch failed");
+        tr.appendChild(td); el.feed.appendChild(tr);
+      }
+    } finally {
+      nextFetchAt = Date.now() + REFRESH_MS;
+      renderTimes();
+    }
+  }
+
+  function schedule() {
+    if (timer) clearInterval(timer);
+    timer = setInterval(() => { if (document.visibilityState !== "hidden") refresh(); }, REFRESH_MS);
+  }
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
+
+  // ── boot ───────────────────────────────────────────────────────────────────
+  function starfield() {
+    const host = $("stars");
+    const n = Math.min(160, Math.round(window.innerWidth / 8));
+    for (let i = 0; i < n; i++) {
+      const s = document.createElement("i");
+      s.style.left = (Math.random() * 100) + "vw";
+      s.style.top = (Math.random() * 100) + "vh";
+      const size = Math.random() < 0.15 ? 3 : (Math.random() < 0.5 ? 2 : 1);
+      s.style.width = s.style.height = size + "px";
+      s.style.animationDelay = (Math.random() * 5) + "s";
+      s.style.animationDuration = (3 + Math.random() * 5) + "s";
+      host.appendChild(s);
+    }
+  }
+
+  function connectForm() {
+    showBanner(
+      "<strong>DEMO FEED</strong> — no Supabase URL configured, so these rows are static samples. " +
+      "Connect a project to see real commanders: pass <code>?url=…&amp;key=…</code> in the address bar or fill the constants at the top of this file.<br>" +
+      "Setup guide: <code>supabase/README.md</code>." +
+      "<form class=\"connect\" id=\"connect\">" +
+      "<input id=\"inUrl\" type=\"url\" placeholder=\"https://abcdefgh.supabase.co\" autocomplete=\"off\" spellcheck=\"false\" aria-label=\"Supabase project URL\">" +
+      "<input id=\"inKey\" type=\"text\" placeholder=\"anon public key (eyJ…)\" autocomplete=\"off\" spellcheck=\"false\" aria-label=\"Supabase anon key\">" +
+      "<button class=\"btn\" type=\"submit\">CONNECT</button>" +
+      "</form>",
+      "");
+    const form = $("connect");
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const url = $("inUrl").value.trim().replace(/\/+$/, "");
+      const key = $("inKey").value.trim();
+      if (!url) { $("inUrl").focus(); return; }
+      const q = new URLSearchParams();
+      q.set("url", url);
+      if (key) q.set("key", key);
+      location.search = "?" + q.toString();   // reloads this page with the values in the query string
+    });
+  }
+
+  starfield();
+  el.sourceNote.textContent = DEMO ? "SOURCE: DEMO DATA (STATIC)" : "SOURCE: " + SUPABASE_URL + "/rest/v1/events";
+  if (DEMO) connectForm();
+  refresh();
+  schedule();
+  setInterval(renderTimes, 1000);
+})();
+</script>
+</body>
+</html>

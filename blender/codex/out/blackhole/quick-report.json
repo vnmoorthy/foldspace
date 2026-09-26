@@ -1,0 +1,19 @@
+{
+  "mode": "quick",
+  "checks": {
+    "null_first_integral_max_relative_error": 1.4988987828701283e-10,
+    "shadow_radius_rs": 2.598076211353316,
+    "photon_orbit_radius_rs": 1.5,
+    "disc_inner_radius_rs": 3.0,
+    "higher_order_pixels": 1274,
+    "loop_phase_0_vs_1_max_delta": 0.0,
+    "doppler_total_shift_range": [
+      0.4780214726924896,
+      1.3710588216781616
+    ]
+  },
+  "timing": {
+    "still_seconds": 0.367,
+    "total_seconds": 0.379
+  }
+}
