@@ -1,0 +1,113 @@
+name: Build & screenshot (iOS Simulator)
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - 'assets/**'
+      - 'blender/**'
+      - '**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator:
+    name: xcodebuild + simulator screenshots
+    runs-on: macos-26
+    timeout-minutes: 45
+    env:
+      DEVICE: iPhone 17 Pro
+      BUNDLE_ID: com.vnmoorthy.foldspace
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          ls /Applications | grep -i xcode
+          sudo xcode-select -s /Applications/Xcode_26.6.app
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i "simulator - ios"
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Generate project
+        run: xcodegen generate
+
+      - name: Build for simulator
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Foldspace.xcodeproj \
+            -scheme Foldspace \
+            -destination "platform=iOS Simulator,name=${DEVICE}" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build 2>&1 | tee build.log | grep -E "error:|warning: unused|BUILD|Compiling|Linking" || true
+          grep -q "BUILD SUCCEEDED" build.log
+
+      - name: Upload build log (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore
+
+      - name: Boot simulator
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys,os; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x['name']==os.environ['DEVICE']))")
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" build/Build/Products/Debug-iphonesimulator/Foldspace.app
+
+      - name: Launch + screenshots
+        run: |
+          mkdir -p screenshots
+          shoot () {
+            state="$1"; file="$2"
+            SIMCTL_CHILD_FOLDSPACE_DEMO="$state" xcrun simctl launch --terminate-running-process "$UDID" "$BUNDLE_ID" || true
+            sleep 7
+            xcrun simctl io "$UDID" screenshot "screenshots/$file" || true
+            pgrep -f "Foldspace.app" >/dev/null && echo "$state: alive" || echo "$state: NOT RUNNING"
+          }
+          shoot cockpit   01-cockpit.png
+          shoot galaxy    02-galaxy-map.png
+          shoot warp      03-outer-display-warp.png
+          shoot sun       04-sun-dive.png
+          shoot weapon    05-nova-lance.png
+          shoot blackhole 06-sagittarius-a.png
+          shoot andromeda 07-andromeda.png
+          ls -la screenshots
+
+      - name: App log (crash triage)
+        if: always()
+        run: |
+          xcrun simctl spawn "$UDID" log show --last 6m --predicate 'process == "Foldspace"' --style compact 2>/dev/null | grep -iE "fatal|error|crash|exception" | tail -60 > app-log.txt || true
+          ls ~/Library/Logs/DiagnosticReports/ 2>/dev/null | grep -i foldspace | head -5 || true
+          for f in ~/Library/Logs/DiagnosticReports/Foldspace*.ips; do [ -f "$f" ] && head -c 20000 "$f" >> app-log.txt; done || true
+          wc -l app-log.txt || true
+
+      - name: Upload screenshots + logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: |
+            screenshots/
+            app-log.txt
+          if-no-files-found: ignore
+
+      - name: Upload .app
+        if: success()
+        run: ditto -c -k --keepParent build/Build/Products/Debug-iphonesimulator/Foldspace.app Foldspace-simulator.app.zip
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: Foldspace-simulator-app
+          path: Foldspace-simulator.app.zip
