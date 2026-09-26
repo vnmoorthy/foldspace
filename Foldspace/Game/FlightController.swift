@@ -114,16 +114,9 @@ final class FlightController {
             }
 
         case .sunDive:
-            // angle 120° → depth 0 (corona), angle 12° → depth 1 (core)
-            let depth = max(0, min(1, (120 - hinge.angle) / 108))
-            store.updateSunDive(depth: depth, dt: dt)
-            if hinge.angle > 130, depth <= 0 {
-                store.endSunDive()
-                if case .orbit = store.phase { Haptics.success() }
-            } else if depth > 0.02, now - lastRumble > 0.4 {
-                lastRumble = now
-                Haptics.rumble(intensity: 0.2 + 0.8 * depth)
-            }
+            // SunDiveView owns the dive loop (depth, burn, climb-out, rumble). Feeding
+            // updateSunDive from here as well would burn the hull twice per frame.
+            break
 
         default:
             break

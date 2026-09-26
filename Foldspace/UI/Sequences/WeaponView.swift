@@ -39,6 +39,14 @@ struct WeaponView: View {
 
         ZStack {
             if charging || firing {
+                // Dim the console so the lance owns the moment (the readout card sits on it).
+                VStack(spacing: 0) {
+                    Color.clear
+                    LinearGradient(colors: [Theme.bg.opacity(0.35), Theme.bg.opacity(0.82), Theme.bg.opacity(0.9)],
+                                   startPoint: .top, endPoint: .bottom)
+                }
+                .allowsHitTesting(false)
+
                 TimelineView(.animation) { timeline in
                     let now = timeline.date
                     let t = now.timeIntervalSinceReferenceDate
@@ -51,7 +59,6 @@ struct WeaponView: View {
                         }
                     }
                 }
-                .ignoresSafeArea()
                 .allowsHitTesting(false)
 
                 if charging {
@@ -83,8 +90,8 @@ struct WeaponView: View {
     private func chargingReadout(charge: Double, angle: Double, name: String) -> some View {
         let pct = Int((charge * 100).rounded())
         let ready = charge >= 0.6
-        return VStack {
-            Spacer()
+        return VStack(spacing: 0) {
+            Color.clear
             VStack(spacing: 6) {
                 Text("NOVA LANCE  CHARGE \(pct)%")
                     .font(.mono(15, weight: .bold))
@@ -104,13 +111,14 @@ struct WeaponView: View {
             .background(Theme.panel.opacity(0.85))
             .overlay(RoundedRectangle(cornerRadius: 6).stroke((ready ? Theme.gain : Theme.warn).opacity(0.6), lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: 6))
-            .padding(.bottom, 40)
+            .shadow(color: .black.opacity(0.6), radius: 18)
+            .frame(maxHeight: .infinity)
         }
     }
 
     private func firingReadout(name: String, fired: Date?) -> some View {
-        VStack {
-            Spacer()
+        VStack(spacing: 0) {
+            Color.clear
             VStack(spacing: 6) {
                 Text("NOVA LANCE  DISCHARGE")
                     .font(.mono(15, weight: .bold))
@@ -127,9 +135,9 @@ struct WeaponView: View {
             .background(Theme.panel.opacity(0.85))
             .overlay(RoundedRectangle(cornerRadius: 6).stroke(Theme.danger.opacity(0.7), lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: 6))
-            .padding(.bottom, 40)
+            .shadow(color: .black.opacity(0.6), radius: 18)
+            .frame(maxHeight: .infinity)
         }
-        .opacity(fired == nil ? 1 : 1)
     }
 
     // MARK: - Canvas: charging
@@ -154,7 +162,8 @@ struct WeaponView: View {
 
         // Converging particles: each has a fixed lane (x) and half, and streams toward the seam.
         context.blendMode = .plusLighter
-        let count = 24 + Int(90 * charge)
+        let count = 18 + Int(46 * charge)
+        let reach = min(size.height * 0.5, 150 + 60 * charge)   // streams start this far from the seam
         for i in 0..<count {
             let seed = Double(i)
             let lane = weaponHash(i, 1)
@@ -164,10 +173,10 @@ struct WeaponView: View {
             let fromTop = (i % 2 == 0)
             // 0 → far from the seam, 1 → at the seam
             let travel = pow(phase, 0.65)
-            let dist = (1 - travel) * (size.height / 2)
+            let dist = (1 - travel) * reach
             let y = fromTop ? seamY - dist : seamY + dist
-            let len = 6 + 30 * travel * (0.3 + charge)
-            let alpha = (0.15 + 0.85 * travel) * (0.35 + 0.65 * glow)
+            let len = 4 + 18 * travel * (0.3 + charge)
+            let alpha = pow(travel, 1.6) * (0.35 + 0.65 * glow)
             let hue = weaponHash(i, 4)
             let color = hot
                 ? Color(red: 0.6 + 0.4 * hue, green: 1, blue: 0.8)
@@ -175,7 +184,7 @@ struct WeaponView: View {
             var streak = Path()
             streak.move(to: CGPoint(x: x, y: y))
             streak.addLine(to: CGPoint(x: x, y: fromTop ? y - len : y + len))
-            context.stroke(streak, with: .color(color.opacity(alpha)), lineWidth: 1 + CGFloat(seed.truncatingRemainder(dividingBy: 2)) * 0.5)
+            context.stroke(streak, with: .color(color.opacity(alpha)), lineWidth: 0.8 + CGFloat(seed.truncatingRemainder(dividingBy: 2)) * 0.4)
         }
 
         // Focus rings on the seam centre that tighten as the charge rises.

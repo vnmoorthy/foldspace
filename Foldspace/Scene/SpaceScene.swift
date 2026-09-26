@@ -1,5 +1,6 @@
 import SceneKit
 import UIKit
+import simd
 
 /// The 3D "hologram in the fold". One instance lives in `SceneViewport`'s coordinator.
 ///
@@ -205,7 +206,11 @@ final class SpaceScene {
         let pitch = Float(pitchDeg * .pi / 180)
         let distance = Cam.baseDistance * (1 + Cam.distanceGrowth * Float(closedness))
         let halfH = distance * tanf(Float(Cam.fov) * 0.5 * Float.pi / 180)  // half visible height at the origin's depth
-        let centerY = -halfH + currentRadius * Cam.floorFraction              // rig-space y of the body's centre
+        // Black holes float centred in the reticle (their lensed disc is far wider than the shadow);
+        // everything else rests on the fold.
+        let centerY: Float = currentBody?.kind == .blackHole
+            ? -halfH * 0.05
+            : -halfH + currentRadius * Cam.floorFraction                      // rig-space y of the body's centre
 
         // rig-local (0, centerY, 0) → world, for a rig rotated by −pitch about x
         let worldY = centerY * cosf(pitch)
@@ -229,7 +234,7 @@ final class SpaceScene {
     private static func visualRadius(for body: CelestialBody) -> Float {
         switch body.kind {
         case .star: return 1.05
-        case .blackHole: return 0.72
+        case .blackHole: return 0.42
         case .galaxy: return 1.1
         case .dwarfPlanet: return 0.72
         case .planet:
@@ -437,72 +442,43 @@ final class SpaceScene {
     }
 
     private func addBlackHole(_ body: CelestialBody, radius: Float) {
-        // Shadow sphere
-        let sphere = SCNSphere(radius: CGFloat(radius))
-        sphere.segmentCount = 48
-        sphere.firstMaterial = PlanetMaterials.material(for: body)
-        let shadow = SCNNode(geometry: sphere)
-        shadow.name = "body"
-        bodySpin.addChildNode(shadow)
-        bodySphereNode = shadow
+        // The Blender geodesic render (assets/textures/blackhole-still.png) spans ±12 r_s and its
+        // apparent shadow sits at 2.598 r_s, so a plane 2 × 12 / 2.598 ≈ 9.24 shadow radii wide puts
+        // the painted shadow exactly on `radius`. It is camera-facing: the lensing is view-dependent
+        // anyway, and the render already contains the lensed far side of the disc.
+        let width = CGFloat(radius * 2 * 12 / 2.598)
+        let plane = SCNPlane(width: width, height: width)
+        let m = SCNMaterial()
+        m.lightingModel = .constant
+        if let still = VisualAssets.image(named: "blackhole-still") {
+            m.diffuse.contents = still
+        } else {
+            m.diffuse.contents = PlanetMaterials.accretionDiskTexture()
+        }
+        m.diffuse.wrapS = .clamp
+        m.diffuse.wrapT = .clamp
+        m.diffuse.mipFilter = .linear
+        m.blendMode = .alpha
+        m.isDoubleSided = true
+        m.writesToDepthBuffer = false
+        plane.firstMaterial = m
+        let node = SCNNode(geometry: plane)
+        node.name = "body"
+        node.constraints = [SCNBillboardConstraint()]
+        bodyAnchor.addChildNode(node)
+        bodySphereNode = node
 
-        // Photon ring: thin emissive torus that always faces the camera.
-        let ringHolder = SCNNode()
-        ringHolder.constraints = [SCNBillboardConstraint()]
-        let torus = SCNTorus(ringRadius: CGFloat(radius * 1.03), pipeRadius: CGFloat(radius * 0.035))
-        torus.ringSegmentCount = 72
-        torus.pipeSegmentCount = 12
-        let tm = SCNMaterial()
-        tm.lightingModel = .constant
-        tm.diffuse.contents = UIColor.black
-        tm.emission.contents = UIColor(red: 1.0, green: 0.78, blue: 0.45, alpha: 1)
-        tm.emission.intensity = 1.6
-        tm.blendMode = .add
-        torus.firstMaterial = tm
-        let ring = SCNNode(geometry: torus)
-        ring.eulerAngles = SCNVector3(Float.pi / 2, 0, 0)
-        ringHolder.addChildNode(ring)
-        bodyAnchor.addChildNode(ringHolder)
+        // Barely-there breathing so the hologram doesn't read as a sticker.
+        let up = SCNAction.scale(to: 1.012, duration: 2.6)
+        up.timingMode = .easeInEaseOut
+        let down = SCNAction.scale(to: 1.0, duration: 2.6)
+        down.timingMode = .easeInEaseOut
+        node.runAction(.repeatForever(.sequence([up, down])))
 
-        // Accretion disc: flattened emissive torus (the dense inner flow) + wide gradient plane.
-        let diskTilt = SCNNode()
-        diskTilt.name = "diskTilt"
-        diskTilt.eulerAngles = SCNVector3(-(Float.pi / 2 - 0.35), 0, 0)   // seen from ~20° above when flat
-        bodyTilt.addChildNode(diskTilt)
-
-        let innerTorus = SCNTorus(ringRadius: CGFloat(radius * 1.55), pipeRadius: CGFloat(radius * 0.32))
-        innerTorus.ringSegmentCount = 64
-        innerTorus.pipeSegmentCount = 10
-        let im = SCNMaterial()
-        im.lightingModel = .constant
-        im.diffuse.contents = UIColor.black
-        im.emission.contents = UIColor(red: 1.0, green: 0.55, blue: 0.18, alpha: 1)
-        im.emission.intensity = 1.2
-        im.blendMode = .add
-        im.transparency = 0.55
-        im.writesToDepthBuffer = false
-        innerTorus.firstMaterial = im
-        let inner = SCNNode(geometry: innerTorus)
-        inner.eulerAngles = SCNVector3(Float.pi / 2, 0, 0)     // torus axis → plane normal (z)
-        inner.scale = SCNVector3(1, 1, 0.12)                    // flatten along the normal
-        diskTilt.addChildNode(inner)
-
-        let plane = SCNPlane(width: CGFloat(radius * 5.4), height: CGFloat(radius * 5.4))
-        let pm = SCNMaterial()
-        pm.lightingModel = .constant
-        pm.diffuse.contents = PlanetMaterials.accretionDiskTexture()
-        pm.blendMode = .add
-        pm.isDoubleSided = true
-        pm.writesToDepthBuffer = false
-        plane.firstMaterial = pm
-        let disk = SCNNode(geometry: plane)
-        disk.name = "accretion"
-        diskTilt.addChildNode(disk)
-        disk.runAction(SCNAction.repeatForever(SCNAction.rotateBy(x: 0, y: 0, z: -CGFloat.pi * 2, duration: 11)))
-        inner.runAction(SCNAction.repeatForever(SCNAction.rotateBy(x: 0, y: -CGFloat.pi * 2, z: 0, duration: 6)))
-
-        // Warm lensing glow behind everything.
-        addHalo(color: UIColor(red: 1.0, green: 0.45, blue: 0.15, alpha: 1), size: radius * 5.2, opacity: 0.35, falloff: 3.0)
+        // Faint warm lensing glow behind the disc.
+        let glow = addHalo(color: UIColor(red: 1.0, green: 0.55, blue: 0.25, alpha: 1), size: radius * 7.5, opacity: 0.16, falloff: 3.2)
+        glow.renderingOrder = -1
+        node.renderingOrder = 1
     }
 
     private func addGalaxy(_ body: CelestialBody, radius: Float) {
@@ -521,23 +497,89 @@ final class SpaceScene {
 
     // MARK: - Fixed scenery
 
+    /// ~1800 stars as tiny camera-facing quads on a 60-unit shell, each textured with a sharp radial
+    /// glow sprite and tinted/brightened per star through vertex colours. One draw call, crisp round
+    /// points at any resolution (a texture-mapped sky sphere magnifies ~14× and turns stars into blobs).
     private func buildStarfield() {
-        let sphere = SCNSphere(radius: 70)
-        sphere.segmentCount = 36
-        let m = SCNMaterial()
-        m.lightingModel = .constant
-        m.diffuse.contents = PlanetMaterials.starfieldTexture()
-        m.cullMode = .front                      // we're inside it
-        m.isDoubleSided = false
-        m.writesToDepthBuffer = false
-        m.diffuse.wrapS = .repeat
-        m.diffuse.wrapT = .clamp
-        sphere.firstMaterial = m
-        starfield.geometry = sphere
+        starfield.geometry = Self.makeStarGeometry(count: 1800, radius: 60)
         starfield.name = "starfield"
         starfield.eulerAngles = SCNVector3(0.35, 0, 0.2)
+        starfield.renderingOrder = -10
         scene.rootNode.addChildNode(starfield)
         starfield.runAction(SCNAction.repeatForever(SCNAction.rotateBy(x: 0, y: CGFloat.pi * 2, z: 0, duration: 900)))
+    }
+
+    private static func starSprite(size: Int = 64) -> UIImage {
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: size, height: size), format: {
+            let f = UIGraphicsImageRendererFormat(); f.scale = 1; f.opaque = false; return f
+        }())
+        return renderer.image { ctx in
+            let c = ctx.cgContext
+            let mid = CGPoint(x: CGFloat(size) / 2, y: CGFloat(size) / 2)
+            let space = CGColorSpaceCreateDeviceRGB()
+            // soft outer glow
+            let glow = [UIColor(white: 1, alpha: 0.22).cgColor, UIColor(white: 1, alpha: 0).cgColor] as CFArray
+            if let g = CGGradient(colorsSpace: space, colors: glow, locations: [0, 1]) {
+                c.drawRadialGradient(g, startCenter: mid, startRadius: 0, endCenter: mid, endRadius: CGFloat(size) / 2, options: [])
+            }
+            // hot round core
+            let core = [UIColor(white: 1, alpha: 1).cgColor, UIColor(white: 1, alpha: 0.85).cgColor, UIColor(white: 1, alpha: 0).cgColor] as CFArray
+            if let g = CGGradient(colorsSpace: space, colors: core, locations: [0, 0.35, 1]) {
+                c.drawRadialGradient(g, startCenter: mid, startRadius: 0, endCenter: mid, endRadius: CGFloat(size) * 0.2, options: [])
+            }
+        }
+    }
+
+    private static func makeStarGeometry(count: Int, radius: Float) -> SCNGeometry {
+        var rng = SystemRandomNumberGenerator()
+        var verts: [SCNVector3] = []
+        var uvs: [CGPoint] = []
+        var colors: [SIMD4<Float>] = []
+        var idx: [UInt32] = []
+        verts.reserveCapacity(count * 4)
+        for _ in 0..<count {
+            // uniform direction on the sphere
+            let z = Float.random(in: -1...1, using: &rng)
+            let th = Float.random(in: 0..<(2 * .pi), using: &rng)
+            let s = (1 - z * z).squareRoot()
+            let n = SIMD3<Float>(s * cosf(th), s * sinf(th), z)
+            let p = n * radius
+            // tangent basis so the quad faces the centre (≈ the camera)
+            let helper = abs(n.y) < 0.95 ? SIMD3<Float>(0, 1, 0) : SIMD3<Float>(1, 0, 0)
+            let t1 = simd_normalize(simd_cross(helper, n))
+            let t2 = simd_cross(n, t1)
+            let mag = Float.random(in: 0..<1, using: &rng)
+            let size = 0.16 + powf(mag, 5) * 0.75                     // world units at r = 60 → ~2…9 px
+            let bright = 0.35 + 0.65 * powf(mag, 0.8)
+            let tint = Float.random(in: 0..<1, using: &rng)
+            var rgb = SIMD3<Float>(1, 1, 1)
+            if tint < 0.12 { rgb = SIMD3(0.72, 0.84, 1.0) } else if tint < 0.2 { rgb = SIMD3(1.0, 0.84, 0.64) }
+            let col = SIMD4<Float>(rgb.x * bright, rgb.y * bright, rgb.z * bright, 1)
+            let base = UInt32(verts.count)
+            for (dx, dy, u, v) in [(-1, -1, 0, 0), (1, -1, 1, 0), (1, 1, 1, 1), (-1, 1, 0, 1)] as [(Float, Float, CGFloat, CGFloat)] {
+                let q = p + (t1 * dx + t2 * dy) * (size * 0.5)
+                verts.append(SCNVector3(q.x, q.y, q.z))
+                uvs.append(CGPoint(x: u, y: v))
+                colors.append(col)
+            }
+            idx += [base, base + 1, base + 2, base, base + 2, base + 3]
+        }
+        let colorData = colors.withUnsafeBufferPointer { Data(buffer: $0) }
+        let colorSource = SCNGeometrySource(data: colorData, semantic: .color, vectorCount: colors.count,
+                                            usesFloatComponents: true, componentsPerVector: 4,
+                                            bytesPerComponent: MemoryLayout<Float>.size, dataOffset: 0,
+                                            dataStride: MemoryLayout<SIMD4<Float>>.stride)
+        let geo = SCNGeometry(sources: [SCNGeometrySource(vertices: verts), SCNGeometrySource(textureCoordinates: uvs), colorSource],
+                              elements: [SCNGeometryElement(indices: idx, primitiveType: .triangles)])
+        let m = SCNMaterial()
+        m.lightingModel = .constant
+        m.diffuse.contents = starSprite()
+        m.diffuse.mipFilter = .linear
+        m.blendMode = .add
+        m.isDoubleSided = true
+        m.writesToDepthBuffer = false
+        geo.firstMaterial = m
+        return geo
     }
 
     private func buildLights() {

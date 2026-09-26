@@ -115,8 +115,11 @@ struct HUDOverlay: View {
 
             VStack {
                 Spacer()
-                CockpitCaption(lockLabel, color: tint)
-                    .padding(.top, 4)
+                // The warning strip takes over this spot while the lance is live.
+                if warning == nil {
+                    CockpitCaption(lockLabel, color: tint)
+                        .padding(.top, 4)
+                }
             }
             .frame(width: d * 1.5, height: d * 1.5)
         }

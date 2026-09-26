@@ -95,7 +95,7 @@ struct FoldspaceApp: App {
                 store.save.bodyID = BodyID.earth
                 hinge.ingest(angle: 110)
                 store.beginSunDive()
-                hinge.ingest(angle: 40)
+                hinge.animate(to: 40, duration: 1.6)
             case "weapon":
                 store.demoSkip(to: .core)
                 store.save.systemID = SystemID.sol
@@ -104,7 +104,7 @@ struct FoldspaceApp: App {
                 hinge.ingest(angle: 110)
                 store.beginWeaponCharge()
                 store.weaponCharge = 0.8
-                hinge.ingest(angle: 25)
+                hinge.animate(to: 25, duration: 0.9)
             case "blackhole":
                 store.demoSkip(to: .core)
                 hinge.ingest(angle: 110)

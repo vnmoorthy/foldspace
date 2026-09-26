@@ -311,7 +311,9 @@ final class GameStore {
         guard case .sunDive = phase else { return }
         diveDepth = max(0, min(1, depth))
         // Hull burns faster the deeper you go; it never regenerates inside the star.
-        let burn = pow(diveDepth, 2.2) * 26 + (diveDepth > 0.15 ? 1.5 : 0)
+        // Tuned so parking at depth ~0.75 lasts ~25 s (≈4 %/s), while the last stretch to the core
+        // (> 0.97) burns ~12 %/s: a brisk in-and-out run to the core costs ~30–40 % hull.
+        let burn = diveDepth > 0.15 ? 1.0 + 2.0 * diveDepth + 9.0 * pow(diveDepth, 6) : 0
         hull = max(0, hull - burn * dt)
         if diveDepth > 0.97, !save.solarCoreSample {
             save.solarCoreSample = true

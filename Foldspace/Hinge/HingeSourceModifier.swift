@@ -16,12 +16,16 @@ struct HingeSourceModifier: ViewModifier {
         // with `angle: Angle` (180° when flat) and `status: .closed / .partiallyOpen / .fullyOpen`.
         // Apple's guidance: use the hinge for interactions and effects, never for layout —
         // layout comes from size classes, reserved regions and ArrangementView.
-        content
-            .onHingeChange { _, newContext in
-                guard let hinge = newContext.hinge else { return }
-                engine.source = .duo
-                engine.ingest(angle: hinge.angle.degrees)
-            }
+        if #available(iOS 27.1, *) {
+            content
+                .onHingeChange { _, newContext in
+                    guard let hinge = newContext.hinge else { return }
+                    engine.source = .duo
+                    engine.ingest(angle: hinge.angle.degrees)
+                }
+        } else {
+            content
+        }
         #else
         content
         #endif
@@ -61,7 +65,8 @@ enum FoldGeometry {
     /// the modelled seam at the vertical midpoint.
     static func seamRect(in size: CGSize, proxy: GeometryProxy) -> CGRect {
         #if DUO_SDK
-        if let fold = proxy.reservedRegions(kind: .division).first(where: { $0.isActive }) {
+        if #available(iOS 27.1, *),
+           let fold = proxy.reservedRegions(kind: .division).first(where: { $0.isActive }) {
             return fold.frame
         }
         #endif
@@ -71,9 +76,10 @@ enum FoldGeometry {
     /// Camera cut-outs (`.occlusion` reserved regions) to keep HUD readouts away from.
     static func occlusions(proxy: GeometryProxy) -> [CGRect] {
         #if DUO_SDK
-        return proxy.reservedRegions(kind: .occlusion).map(\.frame)
-        #else
-        return []
+        if #available(iOS 27.1, *) {
+            return proxy.reservedRegions(kind: .occlusion).map(\.frame)
+        }
         #endif
+        return []
     }
 }

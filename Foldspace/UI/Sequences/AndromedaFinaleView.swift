@@ -59,7 +59,7 @@ struct AndromedaFinaleView: View {
 
                 // Stats card sits on the seam line between the two galaxies.
                 VStack(spacing: 10) {
-                    Text("COMMANDER \(callsign.uppercased()) · FLIGHT LOG")
+                    Text(callsign.uppercased() == "COMMANDER" ? "COMMANDER · FLIGHT LOG" : "COMMANDER \(callsign.uppercased()) · FLIGHT LOG")
                         .font(.mono(9, weight: .semibold))
                         .kerning(1.5)
                         .foregroundStyle(Theme.dim)

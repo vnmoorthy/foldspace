@@ -352,7 +352,7 @@ final class ShipComputer {
         let claimed = save.claimed.count
         let destroyed = save.destroyed.count
         let years = Int(save.earthYearsElapsed.rounded())
-        var line = "Commander \(save.callsign): \(claimed) world\(claimed == 1 ? "" : "s") on the beacon network, "
+        var line = (save.callsign.uppercased() == "COMMANDER" ? "Commander: " : "Commander \(save.callsign): ") + "\(claimed) world\(claimed == 1 ? "" : "s") on the beacon network, "
             + "\(destroyed) destroyed, \(save.energy) energy in reserve"
         line += years > 0 ? ", \(years) Earth years behind us." : "."
         line += destroyed == 0

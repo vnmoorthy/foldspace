@@ -298,7 +298,7 @@ struct BlackHoleView: View {
                             .monospacedDigit()
                             .foregroundStyle(Theme.warn)
                             .hudGlow(Theme.warn)
-                        Text(String(format: "DILATION ×%.2f", model.phase == .flying ? model.timeDilation : 1))
+                        Text(String(format: "DILATION ×%.2f", model.phase == .flying ? Double(model.timeDilation) : 1.0))
                             .font(.mono(8))
                             .monospacedDigit()
                             .foregroundStyle(Theme.dim)
