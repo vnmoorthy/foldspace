@@ -59,6 +59,65 @@ struct FoldspaceApp: App {
             controller.start()
             flight = controller
             Telemetry.breadcrumb(Secrets.summary, category: "launch")
+            applyDemoStateIfRequested()
+        }
+    }
+
+    /// Stage-demo / screenshot hook. Launch with the environment variable FOLDSPACE_DEMO set to one of
+    /// cockpit · galaxy · outer · warp · sun · weapon · blackhole · andromeda to jump straight to that
+    /// moment, e.g. `SIMCTL_CHILD_FOLDSPACE_DEMO=blackhole xcrun simctl launch booted com.vnmoorthy.foldspace`.
+    private func applyDemoStateIfRequested() {
+        guard let demo = ProcessInfo.processInfo.environment["FOLDSPACE_DEMO"]?.lowercased(), !demo.isEmpty else { return }
+        let store = self.store
+        let hinge = self.hinge
+        Task { @MainActor in
+            // Let the first frame render so the views exist before we drive state.
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            switch demo {
+            case "cockpit":
+                store.demoSkip(.warp)
+                hinge.ingest(angle: 110)
+            case "galaxy":
+                store.demoSkip(.warp)
+                store.targetSystemID = SystemID.trappist1
+                hinge.ingest(angle: 180)
+            case "outer":
+                store.demoSkip(.warp)
+                hinge.ingest(angle: 0)
+            case "warp":
+                store.demoSkip(.warp)
+                store.targetSystemID = SystemID.alphaCentauri
+                hinge.ingest(angle: 0)
+                store.beginWarp(quality: 1)
+            case "sun":
+                store.demoSkip(.warp)
+                store.save.systemID = SystemID.sol
+                store.save.bodyID = BodyID.earth
+                hinge.ingest(angle: 110)
+                store.beginSunDive()
+                hinge.ingest(angle: 40)
+            case "weapon":
+                store.demoSkip(.core)
+                store.save.systemID = SystemID.sol
+                store.save.bodyID = BodyID.earth
+                store.phase = .orbit
+                hinge.ingest(angle: 110)
+                store.beginWeaponCharge()
+                store.weaponCharge = 0.8
+                hinge.ingest(angle: 25)
+            case "blackhole":
+                store.demoSkip(.core)
+                hinge.ingest(angle: 110)
+                store.phase = .blackHole
+            case "andromeda":
+                store.demoSkip(.core)
+                store.save.reachedAndromeda = true
+                hinge.ingest(angle: 110)
+                store.phase = .andromeda
+            default:
+                break
+            }
+            store.log("DEMO STATE: \(demo.uppercased())")
         }
     }
 }
