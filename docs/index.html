@@ -2,609 +2,192 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FOLDSPACE — Fold the phone. Fold space.</title>
-<meta name="description" content="FOLDSPACE is a SwiftUI space-exploration game for iPhone Duo where the hinge is the ship. Close the phone to warp, squeeze and snap to fire, pump it to jump to Andromeda. Built in one day at Bitrig Hacks: iPhone Duo Edition.">
+<meta name="description" content="FOLDSPACE is a space game for iPhone Duo where the hinge is the ship. Close the phone to warp. Squeeze and snap to fire. Pump it to jump to Andromeda.">
 <meta property="og:title" content="FOLDSPACE — Fold the phone. Fold space.">
-<meta property="og:description" content="A space-exploration game where the iPhone Duo's hinge is the ship. Built at Bitrig Hacks (YC, Sept 26 2026).">
-<meta property="og:image" content="https://vnmoorthy.github.io/foldspace/hero.png">
+<meta property="og:description" content="A game for iPhone Duo. The hinge is the ship.">
+<meta property="og:image" content="https://vnmoorthy.github.io/foldspace/social-preview.png">
 <meta property="og:type" content="website">
-<meta name="theme-color" content="#05070F">
-<style>
-  :root {
-    --bg: #05070F;
-    --panel: #0B1020;
-    --panel-2: #0E1730;
-    --cyan: #3DF2FF;
-    --orange: #FFB238;
-    --gain: #4DFF9A;
-    --danger: #FF3B5C;
-    --dim: #6B7A99;
-    --text: #E6ECF7;
-    --muted: #A9B4CC;
-    --line: rgba(61, 242, 255, 0.14);
-    --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --wrap: 1120px;
-  }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  html, body { overflow-x: hidden; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    background-image:
-      radial-gradient(900px 500px at 15% -10%, rgba(61, 242, 255, 0.10), transparent 60%),
-      radial-gradient(700px 400px at 95% 5%, rgba(255, 178, 56, 0.08), transparent 60%),
-      radial-gradient(900px 600px at 60% 110%, rgba(91, 63, 209, 0.14), transparent 60%);
-    background-attachment: fixed;
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 17px;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-  }
-  a { color: var(--cyan); text-decoration: none; }
-  a:hover { text-decoration: underline; text-underline-offset: 3px; }
-  h1, h2, h3, h4 { font-family: var(--mono); font-weight: 700; letter-spacing: 0.02em; line-height: 1.15; margin: 0 0 0.5em; }
-  h2 { font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.2rem); color: #fff; }
-  h3 { font-size: 1.05rem; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.12em; }
-  p { margin: 0 0 1em; }
-  code { font-family: var(--mono); font-size: 0.88em; color: var(--cyan); background: rgba(61, 242, 255, 0.07); padding: 0.1em 0.4em; border-radius: 4px; }
-  pre {
-    font-family: var(--mono); font-size: 0.86rem; line-height: 1.55;
-    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
-    padding: 16px 18px; overflow-x: auto; margin: 0 0 1em; color: #DCE8FF;
-  }
-  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
-  pre .c { color: var(--dim); }
-  pre .k { color: var(--orange); }
-  .wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 20px; }
-  .eyebrow { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--dim); margin: 0 0 12px; }
-  .eyebrow b { color: var(--orange); font-weight: 600; }
-  section { padding: 64px 0; border-top: 1px solid rgba(255,255,255,0.05); }
-  section.tight { padding-top: 40px; }
-  .lede { font-size: 1.2rem; color: var(--muted); max-width: 760px; }
-  .grid { display: grid; gap: 18px; }
-  .grid-3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-  .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-  .grid > *, .hero-copy > *, .steps > * { min-width: 0; }
-  img, svg, video { max-width: 100%; }
-
-  /* nav */
-  .nav {
-    position: sticky; top: 0; z-index: 20;
-    background: rgba(5, 7, 15, 0.82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-  }
-  .nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 58px; gap: 16px; }
-  .brand { font-family: var(--mono); font-weight: 700; letter-spacing: 0.18em; color: #fff; font-size: 0.95rem; display: flex; align-items: center; gap: 10px; }
-  .brand i { width: 9px; height: 9px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 12px var(--cyan); display: inline-block; }
-  .nav nav { display: flex; gap: 18px; font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; }
-  .nav nav a { color: var(--muted); }
-  .nav nav a:hover { color: var(--cyan); text-decoration: none; }
-  .nav nav a.gh { color: var(--orange); }
-  @media (max-width: 760px) { .nav nav a:not(.gh):not(.keep) { display: none; } }
-
-  /* hero */
-  .hero { padding: 28px 0 56px; border-top: 0; }
-  .hero-img {
-    display: block; width: 100%; height: auto; border-radius: 16px;
-    border: 1px solid rgba(61, 242, 255, 0.18);
-    box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 0 60px rgba(61, 242, 255, 0.08);
-    background: var(--panel);
-  }
-  .hero-copy { display: grid; grid-template-columns: 1.4fr 1fr; gap: 32px; margin-top: 36px; align-items: start; }
-  @media (max-width: 860px) { .hero-copy { grid-template-columns: 1fr; } }
-  .hero h1 { font-size: clamp(2rem, 1.4rem + 3vw, 3.4rem); color: #fff; letter-spacing: 0.06em; margin-bottom: 0.3em; }
-  .hero h1 span { color: var(--cyan); }
-  .tag { font-family: var(--mono); color: var(--cyan); font-size: clamp(1rem, 0.9rem + 0.8vw, 1.35rem); margin-bottom: 0.9em; }
-  .ctas { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
-  .btn {
-    font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase;
-    padding: 12px 18px; border-radius: 8px; border: 1px solid var(--cyan); color: var(--cyan);
-    background: rgba(61, 242, 255, 0.06); transition: background .15s, transform .15s;
-  }
-  .btn:hover { background: rgba(61, 242, 255, 0.16); text-decoration: none; transform: translateY(-1px); }
-  .btn.primary { background: var(--cyan); color: #04121A; font-weight: 700; }
-  .btn.primary:hover { background: #7DF7FF; }
-  .btn.orange { border-color: var(--orange); color: var(--orange); background: rgba(255, 178, 56, 0.07); }
-  .btn.orange:hover { background: rgba(255, 178, 56, 0.16); }
-  .facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .fact { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
-  .fact b { display: block; font-family: var(--mono); font-size: 1.5rem; color: #fff; line-height: 1.1; }
-  .fact span { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
-  .fact.cyan b { color: var(--cyan); }
-  .fact.orange b { color: var(--orange); }
-  .fact.gain b { color: var(--gain); }
-
-  /* quote */
-  blockquote {
-    margin: 24px 0; padding: 20px 24px; border-left: 3px solid var(--orange);
-    background: linear-gradient(90deg, rgba(255,178,56,0.08), transparent 70%);
-    border-radius: 0 12px 12px 0; font-size: 1.1rem; color: #fff;
-  }
-
-  /* tables */
-  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); margin: 0 0 22px; -webkit-overflow-scrolling: touch; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; min-width: 640px; }
-  th, td { text-align: left; padding: 12px 14px; vertical-align: top; border-bottom: 1px solid rgba(255,255,255,0.06); }
-  th { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); background: rgba(255,255,255,0.02); }
-  tr:last-child td { border-bottom: 0; }
-  td.m, .m { font-family: var(--mono); font-size: 0.88em; white-space: nowrap; }
-  td.k { color: #fff; font-weight: 600; }
-  .c-cyan { color: var(--cyan); } .c-orange { color: var(--orange); } .c-gain { color: var(--gain); } .c-danger { color: var(--danger); } .c-dim { color: var(--dim); }
-  .pill { display: inline-block; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; }
-
-  /* cards */
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px; position: relative; overflow: hidden; }
-  .card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 2px; background: linear-gradient(90deg, var(--cyan), transparent); opacity: .6; }
-  .card.orange::before { background: linear-gradient(90deg, var(--orange), transparent); }
-  .card.gain::before { background: linear-gradient(90deg, var(--gain), transparent); }
-  .card h3 { margin-bottom: 6px; }
-  .card .sub { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); margin-bottom: 12px; }
-  .card p { color: var(--muted); font-size: 0.97rem; margin-bottom: 0.6em; }
-  .card ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 0.95rem; }
-  .card li { margin-bottom: 4px; }
-  .steps { counter-reset: act; display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-  .step { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px 20px 16px; }
-  .step::before { counter-increment: act; content: "ACT " counter(act, upper-roman); font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.24em; color: var(--orange); display: block; margin-bottom: 6px; }
-  .step h4 { color: #fff; font-size: 1.05rem; margin-bottom: 6px; }
-  .step p { color: var(--muted); font-size: 0.95rem; margin: 0; }
-
-  /* diagram */
-  .diagram { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); padding: 12px; margin-bottom: 14px; }
-  .diagram svg { display: block; width: 100%; min-width: 820px; height: auto; font-family: var(--mono); }
-  .diagram .box { fill: #0E1730; stroke: rgba(61,242,255,0.45); stroke-width: 1; }
-  .diagram .box.src { stroke: rgba(107,122,153,0.7); stroke-dasharray: 4 3; }
-  .diagram .box.hot { stroke: var(--cyan); stroke-width: 1.5; }
-  .diagram .box.spon { stroke: var(--orange); }
-  .diagram .t { fill: #fff; font-size: 12.5px; font-weight: 700; }
-  .diagram .s { fill: #A9B4CC; font-size: 10.5px; }
-  .diagram .lab { fill: var(--cyan); font-size: 10px; letter-spacing: .06em; }
-  .diagram .lab.o { fill: var(--orange); }
-  .diagram .grp { fill: var(--dim); font-size: 10px; letter-spacing: .22em; }
-  .diagram .edge { stroke: rgba(61,242,255,0.75); stroke-width: 1.4; fill: none; }
-  .diagram .edge.o { stroke: rgba(255,178,56,0.85); }
-  .diagram .edge.dash { stroke-dasharray: 5 4; }
-  .diagram .edge.dim { stroke: rgba(107,122,153,0.8); }
-  .note { font-size: 0.9rem; color: var(--dim); }
-
-  /* gallery */
-  .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
-  .shot { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; position: relative; }
-  .shot .ph {
-    position: relative; aspect-ratio: 9 / 16; display: grid; place-items: center;
-    background:
-      linear-gradient(180deg, rgba(61,242,255,0.06), transparent 40%, rgba(255,178,56,0.05)),
-      repeating-linear-gradient(0deg, transparent 0 23px, rgba(61,242,255,0.05) 23px 24px),
-      repeating-linear-gradient(90deg, transparent 0 23px, rgba(61,242,255,0.05) 23px 24px),
-      var(--panel-2);
-  }
-  .shot .ph::before { content: attr(data-label); position: absolute; inset: auto 0 44% 0; text-align: center; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); pointer-events: none; }
-  .shot .ph::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--cyan); opacity: .35; box-shadow: 0 0 8px var(--cyan); pointer-events: none; }
-  .shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; z-index: 1; font-family: var(--mono); font-size: 0.7rem; color: transparent; }
-  .shot figcaption { padding: 10px 12px; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; color: var(--muted); }
-  .shot figcaption b { color: var(--cyan); font-weight: 600; }
-
-  /* visuals (Blender renders) */
-  .visuals { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-  .visuals .wide { grid-column: 1 / -1; }
-  @media (max-width: 760px) { .visuals { grid-template-columns: 1fr; } }
-  .vis { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
-  .vis .img { display: block; aspect-ratio: 16 / 10; background: var(--bg); }
-  .vis.wide .img { aspect-ratio: 16 / 9; }
-  .vis img { display: block; width: 100%; height: 100%; object-fit: contain; }
-  .vis figcaption { padding: 12px 14px 14px; font-size: 0.92rem; color: var(--muted); border-top: 1px solid rgba(255,255,255,0.05); }
-  .vis figcaption b { display: block; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cyan); margin-bottom: 4px; }
-  .vis figcaption i { font-style: normal; color: var(--dim); }
-
-  /* footer */
-  footer { padding: 40px 0 60px; border-top: 1px solid rgba(255,255,255,0.06); color: var(--dim); font-size: 0.9rem; }
-  footer .links { display: flex; flex-wrap: wrap; gap: 8px 20px; font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px; }
-  .kbd { font-family: var(--mono); font-size: 0.8em; border: 1px solid rgba(255,255,255,0.18); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; color: #fff; background: rgba(255,255,255,0.04); white-space: nowrap; }
-</style>
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#000000">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<script>document.documentElement.classList.add("js")</script>
+<link rel="stylesheet" href="site/site.css">
+<link rel="preload" as="image" href="site/blackhole-poster.jpg">
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
 </head>
 <body>
+<canvas class="stars" id="stars" aria-hidden="true"></canvas>
 
-<header class="nav">
-  <div class="wrap">
-    <a class="brand" href="#top"><i></i>FOLDSPACE</a>
-    <nav>
-      <a href="#hinge">Hinge</a>
-      <a href="#levels">Levels</a>
-      <a href="#duo">Duo API</a>
-      <a href="#architecture">Architecture</a>
-      <a href="#stack">Stack</a>
-      <a href="#visuals">Visuals</a>
-      <a href="#run" class="keep">Run it</a>
-      <a class="gh" href="https://github.com/vnmoorthy/foldspace">GitHub</a>
-    </nav>
+<header class="nav" id="nav">
+  <a class="brand" href="#top">FOLDSPACE</a>
+  <div class="nav-links">
+    <a class="btn btn-sm" href="FOLDSPACE-Deck.pdf">Pitch deck</a>
+    <a class="btn btn-sm" href="https://github.com/vnmoorthy/foldspace">GitHub</a>
   </div>
 </header>
 
 <main id="top">
-<section class="hero">
-  <div class="wrap">
-    <img class="hero-img" src="hero.png" width="1600" height="800" alt="FOLDSPACE hero: an iPhone Duo opened like a laptop with a glowing cyan hinge and a planet hologram floating in the fold. Fold the phone. Fold space.">
-    <div class="hero-copy">
-      <div>
-        <p class="eyebrow"><b>Bitrig Hacks</b> · iPhone Duo Edition · Y Combinator · 26 Sep 2026</p>
-        <h1>The hinge <span>is</span> the ship.</h1>
-        <p class="tag">Fold the phone. Fold space.</p>
-        <p class="lede">FOLDSPACE is a SwiftUI space-exploration game built in one day for iPhone Duo. Close the phone smoothly and you fold space to the next star. Squeeze it and snap it open and a planet shatters in the crease. Pump it like a bellows to charge the jump to Andromeda. Every hinge posture is a flight state; every hinge motion is a verb.</p>
-        <div class="ctas">
-          <a class="btn primary" href="https://github.com/vnmoorthy/foldspace">View the code</a>
-          <a class="btn" href="registry.html">Galactic Registry</a>
-          <a class="btn orange" href="FOLDSPACE-Deck.pptx">Slide deck</a>
-          <a class="btn" href="https://github.com/vnmoorthy/foldspace/blob/main/docs/ARCHITECTURE.md">Architecture</a>
+
+<!-- 1 · HERO -->
+<section class="hero" aria-label="FOLDSPACE">
+  <video class="hero-video" id="heroVideo" autoplay muted loop playsinline preload="auto" poster="site/blackhole-poster.jpg" aria-hidden="true">
+    <source src="site/blackhole-hero.webm" type="video/webm">
+    <source src="site/blackhole-hero.mp4" type="video/mp4">
+  </video>
+  <script>
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      var v = document.getElementById("heroVideo");
+      v.removeAttribute("autoplay"); v.preload = "none";
+      v.querySelectorAll("source").forEach(function (s) { s.remove(); }); v.load();
+    }
+  </script>
+  <img class="hero-poster" src="site/blackhole-poster.jpg" alt="" aria-hidden="true">
+  <div class="hero-shade"></div>
+  <div class="hero-copy">
+    <p class="label">A game for iPhone Duo</p>
+    <h1>FOLDSPACE</h1>
+    <div class="fold-line" aria-hidden="true"></div>
+    <p class="tagline">Fold the phone. Fold space.</p>
+    <div class="ctas">
+      <a class="btn btn-solid" href="#gameplay" id="watchBtn">Watch it play</a>
+      <a class="btn" href="https://github.com/vnmoorthy/foldspace">Get it on GitHub</a>
+      <a class="btn" href="FOLDSPACE-Deck.pdf">Pitch deck</a>
+    </div>
+  </div>
+  <a class="scroll-cue" href="#device" aria-label="Scroll"><b></b></a>
+</section>
+
+<!-- 2 · THE DEVICE IS THE SHIP -->
+<section class="device" id="device">
+  <div class="device-sticky">
+    <div class="device-head">
+      <p class="label">01 — The device is the ship</p>
+      <h2><span id="lineOpen">Open it to fly.</span> <span id="lineClose">Close it to warp.</span></h2>
+    </div>
+    <div class="rig" aria-hidden="true">
+      <div class="duo" id="duo" style="--hinge: 112">
+        <div class="half base">
+          <div class="bezel"><div class="screen console">
+            <svg viewBox="0 0 600 330" preserveAspectRatio="xMidYMid meet" class="hud">
+              <g class="hud-line"><path d="M24 40 H250 M350 40 H576"/><path d="M24 290 H576" opacity=".35"/><path d="M300 300 V318"/></g>
+              <text x="24" y="28" class="t-lbl">SHIP COMPUTER</text>
+              <text x="576" y="28" class="t-lbl" text-anchor="end">SOL · EARTH</text>
+              <text x="24" y="96" class="t-lbl">HINGE</text>
+              <text x="24" y="150" class="t-big" id="hudDeg">112°</text>
+              <text x="24" y="178" class="t-lbl" id="hudPosture">COCKPIT</text>
+              <text x="330" y="96" class="t-lbl">TARGET</text>
+              <text x="330" y="126" class="t-val">ALPHA CENTAURI</text>
+              <text x="330" y="150" class="t-lbl">4.24 LY</text>
+              <text x="330" y="196" class="t-lbl">BUBBLE STABILITY</text>
+              <rect x="330" y="208" width="246" height="4" class="bar-bg"/>
+              <rect x="330" y="208" width="140" height="4" class="bar" id="hudBar"/>
+              <text x="330" y="236" class="t-lbl dim">CRAWL · STABLE · SLAM</text>
+              <text x="24" y="262" class="t-lbl dim">ENERGY 82%  ·  HULL 100%</text>
+            </svg>
+          </div></div>
+        </div>
+        <div class="half lid">
+          <div class="face front"><div class="bezel"><div class="screen game" id="gameScreen">
+            <canvas id="earthCanvas"></canvas>
+            <img class="fallback" src="site/globe-earth.jpg" alt="">
+            <div class="warp-veil" id="warpVeil"><span>FOLDING SPACE</span></div>
+          </div></div></div>
+          <div class="face back"><div class="outer"><span class="label">In transit</span><strong>FOLDING SPACE</strong><span class="ly">4.24 ly</span></div></div>
         </div>
       </div>
-      <div class="facts">
-        <div class="fact cyan"><b>0–180°</b><span>continuous hinge angle</span></div>
-        <div class="fact orange"><b>9</b><span>hinge gestures recognised</span></div>
-        <div class="fact gain"><b>10</b><span>real star systems</span></div>
-        <div class="fact"><b>2.5 M ly</b><span>to Andromeda, in 7 s</span></div>
+    </div>
+    <p class="readout label"><span>Hinge</span> <b id="hingeDeg">112°</b> <span id="hingePosture">Cockpit</span></p>
+  </div>
+</section>
+
+<!-- 3 · MOVES -->
+<section class="moves" aria-label="Five moves">
+  <article class="move">
+    <img src="site/warp.jpg" alt="Alcubierre warp bubble: space contracts ahead and expands behind" loading="lazy">
+    <div class="move-copy reveal"><p class="label">Move 01 <i>—</i> 60–160°/s</p><h3>Close <b>→</b> Warp</h3></div>
+  </article>
+  <article class="move right">
+    <img src="site/globe-tau-ceti-e.jpg" alt="A rocky exoplanet in the crosshairs" loading="lazy">
+    <div class="move-copy reveal"><p class="label">Move 02 <i>—</i> Snap &gt; 250°/s</p><h3>Squeeze + snap <b>→</b> Fire</h3></div>
+  </article>
+  <article class="move">
+    <img src="site/sun.jpg" alt="The Sun: granulation, sunspots and a streaming corona" loading="lazy">
+    <div class="move-copy reveal"><p class="label">Move 03 <i>—</i> Core 15,000,000 K</p><h3>Close near the Sun <b>→</b> Dive</h3></div>
+  </article>
+  <article class="move right">
+    <img src="site/blackhole-still.jpg" alt="Sagittarius A*: a lensed accretion disc around the shadow" loading="lazy">
+    <div class="move-copy reveal"><p class="label">Move 04 <i>—</i> dτ/dt = √(1 − r<sub>s</sub>/r)</p><h3>Fold <b>→</b> Bend gravity</h3></div>
+  </article>
+  <article class="move">
+    <img src="site/galaxy-andromeda-inclined.jpg" alt="The Andromeda galaxy with M32 and M110" loading="lazy">
+    <div class="move-copy reveal"><p class="label">Move 05 <i>—</i> Fold Core</p><h3>Pump ×4 <b>→</b> Andromeda</h3></div>
+  </article>
+</section>
+
+<!-- 4 · DESTINATIONS -->
+<section class="dest" id="destinations">
+  <div class="dest-head reveal">
+    <p class="label">02 — Destinations</p>
+    <h2>Real places. Real distances.</h2>
+  </div>
+  <div class="strip" tabindex="0" aria-label="Destinations, scroll sideways">
+    <figure class="card"><img src="site/globe-proxima-b.jpg" alt="Proxima b" loading="lazy"><figcaption><span class="label">Proxima b</span><strong><em data-count="4.24" data-dec="2">4.24</em> ly</strong></figcaption></figure>
+    <figure class="card"><img src="site/globe-trappist-1e.jpg" alt="TRAPPIST-1e" loading="lazy"><figcaption><span class="label">TRAPPIST-1</span><strong><em data-count="40.7" data-dec="1">40.7</em> ly</strong></figcaption></figure>
+    <figure class="card"><img src="site/blackhole-still.jpg" alt="Sagittarius A*" loading="lazy"><figcaption><span class="label">Sagittarius A*</span><strong><em data-count="26670">26,670</em> ly</strong></figcaption></figure>
+    <figure class="card"><img src="site/galaxy-andromeda-inclined.jpg" alt="Andromeda" loading="lazy"><figcaption><span class="label">Andromeda</span><strong><em data-count="2537000">2,537,000</em> ly</strong></figcaption></figure>
+  </div>
+</section>
+
+<!-- 5 · GAMEPLAY -->
+<section class="gameplay" id="gameplay">
+  <div class="dest-head reveal">
+    <p class="label">03 — Gameplay</p>
+    <h2>On the Duo.</h2>
+  </div>
+  <div class="carousel" id="carousel">
+    <div class="frame">
+      <div class="frame-screen">
+        <figure class="slide"><img src="screenshots/01-cockpit.png" alt="Cockpit, phone half-open"><figcaption>Cockpit</figcaption></figure>
+        <figure class="slide"><img src="screenshots/02-galaxy-map.png" alt="Galaxy map, phone flat"><figcaption>Galaxy map</figcaption></figure>
+        <figure class="slide"><img src="screenshots/03-outer-display-warp.png" alt="Outer display while warping"><figcaption>Outer display · warp</figcaption></figure>
+        <figure class="slide"><img src="screenshots/04-sun-dive.png" alt="Diving into the Sun"><figcaption>Sun dive</figcaption></figure>
+        <figure class="slide"><img src="screenshots/05-nova-lance.png" alt="Nova Lance"><figcaption>Nova Lance</figcaption></figure>
+        <figure class="slide"><img src="screenshots/06-sagittarius-a.png" alt="Sagittarius A* slingshot"><figcaption>Sagittarius A*</figcaption></figure>
+        <figure class="slide"><img src="screenshots/07-andromeda.png" alt="Andromeda"><figcaption>Andromeda</figcaption></figure>
       </div>
+      <div class="frame-hinge" aria-hidden="true"></div>
+    </div>
+    <div class="car-ui">
+      <button class="car-btn" id="prev" aria-label="Previous screenshot">←</button>
+      <p class="label" id="carLabel">Cockpit</p>
+      <button class="car-btn" id="next" aria-label="Next screenshot">→</button>
     </div>
   </div>
 </section>
 
-<section id="idea" class="tight">
-  <div class="wrap">
-    <p class="eyebrow">The idea in one breath</p>
-    <h2>Everyone used the hinge for animations. We used it as an input device.</h2>
-    <p class="lede">Foldable phones have reported their hinge angle for years. FOLDSPACE turns that continuous angle into a controller, and turns the two displays that meet at a known angle into a 3D corner where a hologram can sit.</p>
-    <blockquote>Close the phone smoothly and you fold space to the next star. Squeeze it and snap it open and a planet shatters in the crease. Pump it like a bellows to charge the jump to Andromeda. Close it slowly while orbiting the Sun and you dive into the core.</blockquote>
-    <p>None of this is possible on a flat iPhone. All of it uses what is unique to iPhone Duo: the continuous hinge angle, two displays that meet at a known angle, an outer display that faces the world when the phone is closed, and a 7.6″ canvas with a fold across it.</p>
-    <div class="steps">
-      <div class="step"><h4>Stranded</h4><p>You're in the Solar System with normal engines. Hop between planets, drag the probe across the fold into the hologram to plant a beacon, and recover Exotic Matter, the Field Coil and the Navigation Core from Mars, Jupiter and Neptune.</p></div>
-      <div class="step"><h4>Warp</h4><p>Pick a star on the galaxy map, close the phone, and fold space Alcubierre-style. Explore or destroy each world: destroying yields more energy but you lose whatever you might have found. Dive into the Sun for the Stellar Core Sample that unlocks the Nova Lance.</p></div>
-      <div class="step"><h4>The Core</h4><p>Slingshot around Sagittarius A*, then pump the hinge to charge the Fold Core and slam it shut. Open it: the Milky Way behind you, Andromeda rising out of the corner.</p></div>
+<!-- 6 · FINAL CTA -->
+<section class="final">
+  <img class="final-bg" src="site/galaxy-milkyway.jpg" alt="" loading="lazy">
+  <div class="final-copy reveal">
+    <h2><span><em data-count="2.5" data-dec="1">2.5</em> million light-years.</span> <span>One hinge.</span></h2>
+    <div class="fold-line" aria-hidden="true"></div>
+    <div class="ctas center">
+      <a class="btn btn-solid" href="https://github.com/vnmoorthy/foldspace">Get it on GitHub</a>
+      <a class="btn" href="FOLDSPACE-Deck.pdf">Pitch deck</a>
     </div>
   </div>
+  <footer class="foot label">
+    <span>Bitrig Hacks</span><i>·</i><span>Y Combinator</span><i>·</i><span>2026</span><i>·</i><a href="https://github.com/vnmoorthy/foldspace">github.com/vnmoorthy/foldspace</a>
+  </footer>
 </section>
 
-<section id="hinge">
-  <div class="wrap">
-    <p class="eyebrow">How the hinge drives the game</p>
-    <h2>Every posture is a flight state. Every motion is a verb.</h2>
-    <p class="lede">The recogniser in <code>Foldspace/Hinge/HingeEngine.swift</code> keeps a 2.5-second ring of <code>(angle, velocity, t)</code> samples and turns them into discrete gestures with hysteresis, so a squeeze never reads as a warp and a hop never reads as a close. Thresholds below are the ones in the code.</p>
-
-    <h3>Postures</h3>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Hinge posture</th><th>Angle</th><th>What you see</th><th>What it means</th></tr></thead>
-        <tbody>
-          <tr><td class="k">Closed</td><td class="m">0–12°</td><td>Outer 5.4″ display</td><td>Docked, or <span class="c-cyan">in transit</span> ("FOLDING SPACE · 4.24 ly")</td></tr>
-          <tr><td class="k">Squeezed</td><td class="m">12–45°</td><td>Crease glows</td><td><span class="c-orange">Nova Lance charging</span></td></tr>
-          <tr><td class="k">Cockpit</td><td class="m">45–135°</td><td>Windshield above the fold, console below</td><td>Flying. The planet <span class="c-cyan">hologram sits in the fold</span></td></tr>
-          <tr><td class="k">Open</td><td class="m">135–170°</td><td>Wide cockpit</td><td>Flying</td></tr>
-          <tr><td class="k">Flat</td><td class="m">170–180°</td><td>Whole 7.6″ inner display</td><td><span class="c-gain">Galaxy map</span></td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h3>Gestures</h3>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Hinge motion</th><th>Recognised when</th><th>Emitted as</th><th>Game verb</th></tr></thead>
-        <tbody>
-          <tr><td class="k">Dip the lid and bring it back</td><td>From the cockpit zone, below 70° then back above 85° within 1.5 s, never below 30°</td><td class="m c-cyan">.hop</td><td><b>Hop</b> to the next living planet in the system</td></tr>
-          <tr><td class="k">Close the phone smoothly</td><td>From ≥ 60° all the way to closed; quality 1.0 at 60–160°/s, falling to 0.2 for a slam (&gt; 320°/s) and 0.3 for a crawl (&lt; 20°/s)</td><td class="m c-cyan">.warpClose(quality:)</td><td><b>Warp</b>: fold space to the targeted star. Quality below 0.45 collapses the bubble: −15 hull, dropped out short</td></tr>
-          <tr><td class="k">Squeeze to &lt; 45° and hold</td><td>Enter the squeezed zone while closing (not during a pump)</td><td class="m c-orange">.squeezeBegan</td><td><b>Charge</b> the Nova Lance. A tighter squeeze charges faster</td></tr>
-          <tr><td class="k">Snap it open</td><td>Leave 45° with a peak velocity &gt; 250°/s and pass 100° within 0.6 s</td><td class="m c-orange">.snapOpen</td><td><b>Fire</b> (needs ≥ 60 % charge). The planet shatters in 3D in the corner</td></tr>
-          <tr><td class="k">Let it drift open</td><td>Leave 45° slowly, or stall before 100°</td><td class="m c-dim">.squeezeCancelled</td><td>Lance discharged safely</td></tr>
-          <tr><td class="k">Pump it four times, then slam</td><td>Direction reversals with ≥ 40° swings at &gt; 15°/s, only while the Fold Core is charging</td><td class="m c-gain">.pump(count:) → .pumpComplete</td><td><b>Charge the Fold Core</b> for the 2.5-million-light-year jump, then close to go</td></tr>
-          <tr><td class="k">Close slowly while orbiting the Sun</td><td>Continuous angle: 120° = corona, 12° = core; open past 130° to climb out</td><td class="m c-dim">angle, every 16 ms</td><td><b>Dive</b>: depth = fold amount. Hull burns as depth<sup>2.2</sup>; reach 97 % for the core sample</td></tr>
-          <tr><td class="k">Lay it flat</td><td>Settle at ≥ 170° with |velocity| &lt; 40°/s; lifted again below 160°</td><td class="m c-gain">.laidFlat / .liftedFromFlat</td><td><b>Galaxy map</b> on the full inner display; lift to return to the cockpit</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="note">Velocity is lightly smoothed (35 % previous, 65 % instantaneous) so readouts don't jitter. The engine is fed identically by the Duo hinge, the on-screen hinge control, or CoreMotion tilt, so gestures behave the same in the simulator and on hardware.</p>
-  </div>
-</section>
-
-<section id="levels">
-  <div class="wrap">
-    <p class="eyebrow">Where you can go</p>
-    <h2>Real stars. Real distances. Real facts.</h2>
-    <p class="lede">The catalog in <code>Foldspace/Universe/UniverseData.swift</code> uses NASA Exoplanet Archive data for every world. Fold time is <code>2.2 s + 0.9 × log₁₀(ly)</code>, capped at 5 s, from Sol; Andromeda is a fixed 7 s.</p>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Destination</th><th>Distance</th><th>Act</th><th>Fold cost</th><th>Fold time</th><th>What's there</th></tr></thead>
-        <tbody>
-          <tr><td class="k">Sol</td><td class="m">home</td><td class="m">I</td><td class="m">—</td><td class="m">—</td><td>Mercury → Neptune. The three warp-drive parts are hidden on Mars, Jupiter and Neptune. The Sun is divable: corona ~1,000,000 K, photosphere 5,800 K, core 15,000,000 K.</td></tr>
-          <tr><td class="k">Alpha Centauri</td><td class="m">4.24 ly</td><td class="m">II</td><td class="m">30</td><td class="m">2.8 s</td><td>Proxima b (1.07 M⊕, 11.2-day orbit, habitable zone) and Proxima d</td></tr>
-          <tr><td class="k">Barnard's Star</td><td class="m">5.96 ly</td><td class="m">II</td><td class="m">35</td><td class="m">2.9 s</td><td>Four sub-Earth planets confirmed 2024–2025</td></tr>
-          <tr><td class="k">Wolf 359</td><td class="m">7.86 ly</td><td class="m">II</td><td class="m">40</td><td class="m">3.0 s</td><td>A flare star with a candidate ice giant</td></tr>
-          <tr><td class="k">Sirius</td><td class="m">8.6 ly</td><td class="m">II</td><td class="m">45</td><td class="m">3.0 s</td><td>The brightest star in our sky and its white-dwarf companion</td></tr>
-          <tr><td class="k">Epsilon Eridani</td><td class="m">10.5 ly</td><td class="m">II</td><td class="m">50</td><td class="m">3.1 s</td><td>A young system with a gas giant and debris rings</td></tr>
-          <tr><td class="k">Tau Ceti</td><td class="m">11.9 ly</td><td class="m">II</td><td class="m">55</td><td class="m">3.2 s</td><td>Super-Earths e and f</td></tr>
-          <tr><td class="k">TRAPPIST-1</td><td class="m">40.7 ly</td><td class="m">II</td><td class="m">80</td><td class="m">3.6 s</td><td>Seven Earth-sized planets, three in the habitable zone</td></tr>
-          <tr><td class="k c-orange">Sagittarius A*</td><td class="m">26,670 ly</td><td class="m">III</td><td class="m">150</td><td class="m">5.0 s</td><td>The Milky Way's 4-million-solar-mass black hole. Fold = gravity. Earth's clock races while yours crawls. Fire the Nova Lance at it and the beam simply vanishes.</td></tr>
-          <tr><td class="k c-gain">Andromeda</td><td class="m">2,537,000 ly</td><td class="m">III</td><td class="m">Fold Core</td><td class="m">7.0 s</td><td>The finale. Needs a fully pumped Fold Core, then one clean close.</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
-<section id="duo">
-  <div class="wrap">
-    <p class="eyebrow">iPhone Duo APIs</p>
-    <h2>What the Duo gives us, and where it goes.</h2>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Duo capability</th><th>Where it's used</th></tr></thead>
-        <tbody>
-          <tr><td class="k"><code>onHingeChange</code> (hinge status + continuous angle)</td><td><code>Hinge/HingeSourceModifier.swift</code> feeds <code>HingeEngine.ingest(angle:)</code> and flips the engine's source to <code>.duo</code>, which hides the on-screen hinge control</td></tr>
-          <tr><td class="k">Reserved regions: <code>.division</code> (the fold), <code>.occlusion</code> (camera)</td><td><code>FoldGeometry</code> + <code>UI/Components/FoldSeam.swift</code>: a 14 pt band at the fold hosts nothing interactive. The beacon probe drag <em>deliberately</em> crosses it, console → hologram</td></tr>
-          <tr><td class="k">Outer display ↔ inner display continuity</td><td><code>UI/Outer/OuterDisplayView.swift</code> shows FOLDING SPACE / FOLD CORE / DOCKED cards while closed; the cockpit resumes on open. The camera rig in <code>SpaceScene</code> keeps the hologram in place while the screens move</td></tr>
-          <tr><td class="k">Size classes instead of orientation locks</td><td><code>RootView</code> and <code>CockpitView</code> split at the fold, never at a fixed pixel. The galaxy map's side panel drops below the chart in portrait</td></tr>
-          <tr><td class="k">Split View / multiple windows</td><td><code>UIApplicationSupportsMultipleScenes</code> is on; the galaxy map is a fine second window</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="note"><b class="c-orange">Build-flag note.</b> Xcode 27.1 beta (the first SDK with the Duo APIs) needs macOS 26.6+. The native hinge path is behind the <code>DUO_SDK</code> compilation condition in <code>project.yml</code> and <code>HingeSourceModifier.swift</code>, so the same engine runs from three sources: the Duo hinge, an on-screen hinge control, or CoreMotion tilt on a flat iPhone.</p>
-  </div>
-</section>
-
-<section id="architecture">
-  <div class="wrap">
-    <p class="eyebrow">Architecture</p>
-    <h2>One engine, one controller, one store.</h2>
-    <p class="lede">Angle in, verbs out. Every hinge source feeds the same recogniser; every view observes the same <code>@Observable</code> store; the sponsor services hang off the edges and never block the game.</p>
-    <div class="diagram">
-      <svg viewBox="0 0 1320 420" role="img" aria-label="Architecture: hinge sources feed HingeEngine, which emits gestures to FlightController, which drives GameStore; GameStore is observed by RootView and the views, SpaceScene, GalacticRegistry and the ship computer; those talk to Supabase, OpenAI and Sentry.">
-        <defs>
-          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3DF2FF"/></marker>
-          <marker id="aho" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#FFB238"/></marker>
-          <marker id="ahd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6B7A99"/></marker>
-        </defs>
-
-        <!-- group labels -->
-        <text class="grp" x="20" y="38">HINGE SOURCES</text>
-        <text class="grp" x="262" y="38">RECOGNISER</text>
-        <text class="grp" x="482" y="38">VERBS</text>
-        <text class="grp" x="702" y="38">STATE</text>
-        <text class="grp" x="922" y="38">CONSUMERS</text>
-        <text class="grp" x="1150" y="38">SPONSOR STACK</text>
-
-        <!-- sources -->
-        <rect class="box src" x="20" y="60" width="200" height="60" rx="10"/>
-        <text class="t" x="34" y="84">iPhone Duo</text><text class="s" x="34" y="102">onHingeChange · DUO_SDK</text>
-        <rect class="box src" x="20" y="150" width="200" height="60" rx="10"/>
-        <text class="t" x="34" y="174">HingeSimulatorControl</text><text class="s" x="34" y="192">slider · drag pad · macros</text>
-        <rect class="box src" x="20" y="240" width="200" height="60" rx="10"/>
-        <text class="t" x="34" y="264">CoreMotion tilt</text><text class="s" x="34" y="282">pitch → 0…180°</text>
-
-        <!-- HingeEngine -->
-        <rect class="box hot" x="262" y="110" width="176" height="150" rx="12"/>
-        <text class="t" x="278" y="136">HingeEngine</text>
-        <text class="s" x="278" y="158">ingest(angle:)</text>
-        <text class="s" x="278" y="176">velocity · posture</text>
-        <text class="s" x="278" y="194">2.5 s sample ring</text>
-        <text class="s" x="278" y="212">hop · warpClose · squeeze</text>
-        <text class="s" x="278" y="230">snap · pump · flat</text>
-
-        <!-- FlightController -->
-        <rect class="box hot" x="482" y="110" width="176" height="150" rx="12"/>
-        <text class="t" x="498" y="136">FlightController</text>
-        <text class="s" x="498" y="158">gesture → verb</text>
-        <text class="s" x="498" y="176">60 Hz tick</text>
-        <text class="s" x="498" y="194">weapon charge rate</text>
-        <text class="s" x="498" y="212">dive depth from angle</text>
-        <text class="s" x="498" y="230">haptics</text>
-
-        <!-- GameStore -->
-        <rect class="box hot" x="702" y="110" width="176" height="150" rx="12"/>
-        <text class="t" x="718" y="136">GameStore</text>
-        <text class="s" x="718" y="158">@Observable</text>
-        <text class="s" x="718" y="176">phase · act · energy</text>
-        <text class="s" x="718" y="194">hull · claimed · destroyed</text>
-        <text class="s" x="718" y="212">warp · dive · lance · core</text>
-        <text class="s" x="718" y="230">SaveData → UserDefaults</text>
-
-        <!-- UniverseData -->
-        <rect class="box src" x="702" y="300" width="176" height="56" rx="10"/>
-        <text class="t" x="718" y="323">UniverseData</text><text class="s" x="718" y="341">10 systems · real catalog</text>
-
-        <!-- consumers -->
-        <rect class="box" x="922" y="60" width="190" height="64" rx="10"/>
-        <text class="t" x="936" y="82">RootView → views</text><text class="s" x="936" y="99">Cockpit · GalaxyMap · Outer</text><text class="s" x="936" y="114">Warp · SunDive · Weapon · Finale</text>
-        <rect class="box" x="922" y="140" width="190" height="56" rx="10"/>
-        <text class="t" x="936" y="162">SpaceScene</text><text class="s" x="936" y="180">SceneKit hologram in the fold</text>
-        <rect class="box" x="922" y="212" width="190" height="56" rx="10"/>
-        <text class="t" x="936" y="234">GalacticRegistry</text><text class="s" x="936" y="252">fire-and-forget · retry queue</text>
-        <rect class="box" x="922" y="284" width="190" height="56" rx="10"/>
-        <text class="t" x="936" y="306">Ship computer</text><text class="s" x="936" y="324">scan briefings · log voice</text>
-
-        <!-- sponsors -->
-        <rect class="box spon" x="1150" y="212" width="150" height="56" rx="10"/>
-        <text class="t" x="1164" y="234">Supabase</text><text class="s" x="1164" y="252">events table · REST</text>
-        <rect class="box spon" x="1150" y="284" width="150" height="56" rx="10"/>
-        <text class="t" x="1164" y="306">OpenAI</text><text class="s" x="1164" y="324">responses API</text>
-        <rect class="box spon" x="1150" y="356" width="150" height="52" rx="10"/>
-        <text class="t" x="1164" y="378">Sentry</text><text class="s" x="1164" y="396">crashes · traces</text>
-
-        <!-- edges: sources → engine -->
-        <path class="edge dim" d="M220,90 C245,90 240,185 262,185" marker-end="url(#ahd)"/>
-        <path class="edge dim" d="M220,180 C240,180 240,185 262,185" marker-end="url(#ahd)"/>
-        <path class="edge dim" d="M220,270 C245,270 240,185 262,185" marker-end="url(#ahd)"/>
-        <!-- engine → controller -->
-        <path class="edge" d="M438,185 L482,185" marker-end="url(#ah)"/>
-        <text class="lab" x="440" y="176">HingeGesture</text>
-        <!-- controller → store -->
-        <path class="edge" d="M658,185 L702,185" marker-end="url(#ah)"/>
-        <text class="lab" x="662" y="176">verbs</text>
-        <!-- universe → store -->
-        <path class="edge dim" d="M790,300 L790,260" marker-end="url(#ahd)"/>
-        <!-- store → consumers -->
-        <path class="edge" d="M878,150 C900,150 900,92 922,92" marker-end="url(#ah)"/>
-        <path class="edge" d="M878,168 L922,168" marker-end="url(#ah)"/>
-        <path class="edge" d="M878,200 C900,200 900,240 922,240" marker-end="url(#ah)"/>
-        <path class="edge" d="M878,220 C900,220 900,312 922,312" marker-end="url(#ah)"/>
-        <text class="lab" x="884" y="140">observe</text>
-        <!-- consumers → sponsors -->
-        <path class="edge o" d="M1112,240 L1150,240" marker-end="url(#aho)"/>
-        <path class="edge o" d="M1112,312 L1150,312" marker-end="url(#aho)"/>
-        <path class="edge o dash" d="M1017,340 C1017,382 1100,382 1150,382" marker-end="url(#aho)"/>
-        <text class="lab o" x="1030" y="376">errors · breadcrumbs</text>
-        <!-- hinge angle also drives the scene -->
-        <path class="edge dash" d="M350,260 C350,392 860,392 1017,392 L1017,196" marker-end="url(#ah)" opacity="0.7"/>
-        <text class="lab" x="560" y="404">hinge angle → camera rig, every frame</text>
-      </svg>
-    </div>
-    <p class="note">The deeper walkthrough, with a warp-jump sequence diagram, the gesture recogniser's state machine and per-module notes, is in <a href="https://github.com/vnmoorthy/foldspace/blob/main/docs/ARCHITECTURE.md">docs/ARCHITECTURE.md</a>.</p>
-  </div>
-</section>
-
-<section id="stack">
-  <div class="wrap">
-    <p class="eyebrow">Sponsor stack</p>
-    <h2>The game is fully playable offline. The stack makes it a shared universe.</h2>
-    <div class="grid grid-3">
-      <div class="card gain">
-        <h3>Supabase</h3>
-        <div class="sub">Galactic Registry · Postgres + REST + Realtime</div>
-        <p>Every beacon, every destroyed world, every warp and every Andromeda arrival is posted to an <code>events</code> table (callsign, event, body, energy, created_at). The Swift client speaks PostgREST directly: <code>select</code>, <code>order=created_at.desc</code>, <code>limit</code>.</p>
-        <ul>
-          <li>Fire-and-forget: the game never waits on the network</li>
-          <li>Failed inserts queue in memory (max 50) and flush on the next refresh</li>
-          <li>Anon key + row-level security: anyone can insert and read, nobody can edit</li>
-          <li>Feeds the live <a href="registry.html">Galactic Registry dashboard</a></li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3>OpenAI</h3>
-        <div class="sub">Ship computer · in-character briefings</div>
-        <p>The ship computer turns the real catalog facts for the current body into short, in-character scan briefings and warp readouts, and gives the flight log a voice.</p>
-        <ul>
-          <li>Grounded in <code>UniverseData</code>: the model gets the real facts and is told to stay inside them</li>
-          <li>Short replies, cockpit register, no lore invented</li>
-          <li>Optional: with no key the console shows the raw scan facts</li>
-        </ul>
-      </div>
-      <div class="card orange">
-        <h3>Sentry</h3>
-        <div class="sub">Crashes · performance · gesture breadcrumbs</div>
-        <p>SceneKit at 60 fps on a transparent view, a 60 Hz flight loop and a gesture recogniser are exactly the kind of code that fails quietly. Sentry watches all three.</p>
-        <ul>
-          <li>Every <code>HingeGesture</code> is a breadcrumb, so a misread warp is debuggable</li>
-          <li>Warp, dive and shatter sequences are traced as spans</li>
-          <li>Registry HTTP failures are captured, not swallowed</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="screenshots">
-  <div class="wrap">
-    <p class="eyebrow">Screenshots</p>
-    <h2>Seven moments, one hinge.</h2>
-    <p class="note">Captured in the simulator via the <code>FOLDSPACE_DEMO</code> launch hook. The frames land here when the build machine's Xcode reinstall completes; until then each slot shows its placeholder. The rendered universe is below.</p>
-    <div class="gallery">
-      <figure class="shot"><div class="ph" data-label="cockpit"><img src="screenshots/01-cockpit.png" alt="Cockpit: phone half-open, planet hologram sitting in the fold, console below" loading="lazy"></div><figcaption><b>01</b> Cockpit · phone half-open</figcaption></figure>
-      <figure class="shot"><div class="ph" data-label="galaxy map"><img src="screenshots/02-galaxy-map.png" alt="Galaxy map on the full inner display with the phone laid flat" loading="lazy"></div><figcaption><b>02</b> Galaxy map · phone flat</figcaption></figure>
-      <figure class="shot"><div class="ph" data-label="outer display"><img src="screenshots/03-outer-display-warp.png" alt="Outer display showing FOLDING SPACE while the phone is closed" loading="lazy"></div><figcaption><b>03</b> Outer display · warping</figcaption></figure>
-      <figure class="shot"><div class="ph" data-label="sun dive"><img src="screenshots/04-sun-dive.png" alt="Diving into the Sun: layer temperature and hull readouts" loading="lazy"></div><figcaption><b>04</b> Sun dive · hinge = depth</figcaption></figure>
-      <figure class="shot"><div class="ph" data-label="nova lance"><img src="screenshots/05-nova-lance.png" alt="Nova Lance: the crease glows while squeezed, then the planet shatters" loading="lazy"></div><figcaption><b>05</b> Nova Lance · squeeze + snap</figcaption></figure>
-      <figure class="shot"><div class="ph" data-label="sagittarius a*"><img src="screenshots/06-sagittarius-a.png" alt="Sagittarius A* slingshot with time-dilation clocks" loading="lazy"></div><figcaption><b>06</b> Sagittarius A* · slingshot</figcaption></figure>
-      <figure class="shot"><div class="ph" data-label="andromeda"><img src="screenshots/07-andromeda.png" alt="Andromeda finale: the Milky Way recedes as Andromeda rises out of the corner" loading="lazy"></div><figcaption><b>07</b> Andromeda · the finale</figcaption></figure>
-    </div>
-  </div>
-</section>
-
-<section id="visuals">
-  <div class="wrap">
-    <p class="eyebrow">Visuals · Blender renders</p>
-    <h2>Real physics, rendered.</h2>
-    <p class="lede">Every texture in the game is procedural or computed from equations. Rendered in Blender 5.2 from the physics brief in <a href="https://github.com/vnmoorthy/foldspace/blob/main/docs/BLENDER-CODEX-BRIEF.md">docs/BLENDER-CODEX-BRIEF.md</a>; pipeline in <code>blender/</code> and <code>blender/codex/</code>. Method, assumptions and timings: <a href="https://github.com/vnmoorthy/foldspace/blob/main/assets/NOTES.md">assets/NOTES.md</a>.</p>
-    <div class="visuals">
-      <figure class="vis wide">
-        <a class="img" href="visuals/sagittarius-a.png" target="_blank" rel="noopener"><img src="visuals/sagittarius-a.png" width="1600" height="900" alt="Sagittarius A*: an accretion disc lensed over and under the black hole's shadow, with a thin photon ring" loading="lazy"></a>
-        <figcaption><b>Sagittarius A*</b>Schwarzschild null geodesics (RK4) bend the far side of the disc over and under the shadow; the photon ring sits on the 2.598 r<sub>s</sub> critical curve and Doppler beaming (g<sup>4</sup>) brightens the approaching side, after Luminet 1979 and DNGR (James, von Tunzelmann, Franklin &amp; Thorne 2015). <i>2K still + 12 s HEVC-alpha loop.</i></figcaption>
-      </figure>
-      <figure class="vis">
-        <a class="img" href="visuals/galaxies.png" target="_blank" rel="noopener"><img src="visuals/galaxies.png" width="1600" height="820" alt="The Milky Way face-on beside Andromeda inclined at 77 degrees" loading="lazy"></a>
-        <figcaption><b>Milky Way · Andromeda</b>Density-wave spirals on logarithmic arms (pitch ≈ 15°): four Milky Way arms and a 27 kly bar; M31 with its 10 kpc ring, M32 and M110, at its observed 77° inclination. <i>4096² RGBA planes.</i></figcaption>
-      </figure>
-      <figure class="vis">
-        <a class="img" href="visuals/planets.png" target="_blank" rel="noopener"><img src="visuals/planets.png" width="1792" height="1088" alt="Contact sheet of 26 rendered planet globes" loading="lazy"></a>
-        <figcaption><b>26 worlds</b>Procedural 2048 × 1024 equirectangular maps: zonal bands and the Great Red Spot on the giants, craters and ice on the rocky worlds, lava fissures as emission. Rayleigh atmosphere rims and lighting are added by the runtime material. <i>Inspection globes.</i></figcaption>
-      </figure>
-      <figure class="vis">
-        <a class="img" href="visuals/sun.png" target="_blank" rel="noopener"><img src="visuals/sun.png" width="1600" height="1000" alt="The Sun with granulation, sunspots, limb darkening, prominence arches and a streamer corona" loading="lazy"></a>
-        <figcaption><b>The Sun</b>Voronoi granulation with sunspot groups at ±17–26°, limb darkening I(μ)/I(1) = 0.3 + 0.7 μ, and a helmet-streamer corona out to ~3 R<sub>☉</sub> with Hα prominence arches. <i>Photosphere map + transparent corona.</i></figcaption>
-      </figure>
-      <figure class="vis">
-        <a class="img" href="visuals/asset-review.png" target="_blank" rel="noopener"><img src="visuals/asset-review.png" width="1600" height="1200" alt="Asset review sheet: black hole, galaxies, six planets, Sun, warp and debris atlases" loading="lazy"></a>
-        <figcaption><b>Asset review sheet</b>Everything on one sheet: black hole, galaxies, six of the 26 worlds, the Sun, the 8-frame Alcubierre warp atlas and the 16-frame shatter-debris atlas. <i>42 PNGs + 1 movie, all validated.</i></figcaption>
-      </figure>
-    </div>
-  </div>
-</section>
-
-<section id="run">
-  <div class="wrap">
-    <p class="eyebrow">Run it</p>
-    <h2>Any iPhone simulator today. iPhone Duo on Xcode 27.1.</h2>
-    <div class="grid grid-2">
-      <div>
-        <h3>Requirements</h3>
-        <p>macOS 26+, Xcode 26.3+ (Xcode 27.1 beta for the iPhone Duo simulator), and <a href="https://github.com/yonaskolb/XcodeGen">xcodegen</a>.</p>
-<pre><code><span class="c"># generate the project and open it</span>
-brew install xcodegen
-git clone https://github.com/vnmoorthy/foldspace.git &amp;&amp; cd foldspace
-xcodegen generate &amp;&amp; open Foldspace.xcodeproj</code></pre>
-        <p>Pick any iPhone simulator and run. Use the hinge control pinned to the bottom of the screen: <span class="kbd">CLOSE</span> <span class="kbd">SLAM</span> <span class="kbd">OPEN</span> <span class="kbd">FLAT</span> <span class="kbd">HOP</span> <span class="kbd">SQUEEZE</span> <span class="kbd">SNAP</span> <span class="kbd">PUMP ×4</span>, or drag the lid yourself. Everything the hinge can do is also reachable from the console, so the game is fully playable on a flat iPhone.</p>
-<pre><code><span class="c"># command line</span>
-xcodebuild -project Foldspace.xcodeproj -scheme Foldspace \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
-  CODE_SIGNING_ALLOWED=NO build</code></pre>
-      </div>
-      <div>
-        <h3>On iPhone Duo</h3>
-        <p>Xcode 27.1 beta ships the first SDK with the Duo hinge APIs. Turn on the native path with the <code>DUO_SDK</code> compilation condition, run on <b>iPhone Duo</b>, and fold the device from Device Hub. The on-screen hinge control hides itself as soon as the engine's source becomes <code>.duo</code>.</p>
-<pre><code><span class="c"># project.yml → settings.base</span>
-SWIFT_ACTIVE_COMPILATION_CONDITIONS: <span class="k">"$(inherited) DUO_SDK"</span>
-
-<span class="c"># or in Xcode 27.1: Build Settings → Active Compilation Conditions → DUO_SDK</span></code></pre>
-        <h3>Stage demos</h3>
-        <p>The gear menu in the console has <b>Demo → Act II · Warp</b> (drive assembled, 200 energy, home at Earth) and <b>Demo → Act III · The Core</b> (Nova Lance, core sample and the Sagittarius A* pass done, 600 energy, parked at the black hole) so a three-minute demo can jump straight to the pumps.</p>
-        <h3>Links</h3>
-        <p class="m"><a href="https://github.com/vnmoorthy/foldspace">github.com/vnmoorthy/foldspace</a><br>
-        <a href="registry.html">registry.html</a> · Galactic Registry dashboard<br>
-        <a href="FOLDSPACE-Deck.pptx">FOLDSPACE-Deck.pptx</a> · slide deck<br>
-        <a href="https://github.com/vnmoorthy/foldspace/blob/main/docs/ARCHITECTURE.md">ARCHITECTURE.md</a> · engine, store, sequences</p>
-      </div>
-    </div>
-  </div>
-</section>
 </main>
-
-<footer>
-  <div class="wrap">
-    <div class="links">
-      <a href="https://github.com/vnmoorthy/foldspace">GitHub</a>
-      <a href="registry.html">Galactic Registry</a>
-      <a href="FOLDSPACE-Deck.pptx">Deck</a>
-      <a href="https://github.com/vnmoorthy/foldspace/blob/main/docs/ARCHITECTURE.md">Architecture</a>
-      <a href="https://events.ycombinator.com/bitrig-hacks-september2026">Bitrig Hacks</a>
-    </div>
-    <p>Built by <a href="https://github.com/vnmoorthy">vnmoorthy</a> at Bitrig Hacks: iPhone Duo Edition (Y Combinator, 26 September 2026) with Claude Code. Astronomy data from the NASA Exoplanet Archive, the Event Horizon Telescope collaboration and NASA's Sun fact sheets. No Star Wars was harmed: the weapon is the Nova Lance. MIT license.</p>
-  </div>
-</footer>
-
-<script>
-  // Screenshots and visuals degrade to their placeholders when a file is missing.
-  document.querySelectorAll('.shot img, .vis img').forEach(function (img) {
-    function drop() { img.remove(); }
-    img.addEventListener('error', drop);
-    if (img.complete && img.naturalWidth === 0) drop();
-  });
-</script>
+<script type="module" src="site/site.js"></script>
 </body>
 </html>
