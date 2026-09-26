@@ -26,7 +26,7 @@ Close the phone and you fold space to the next star. Squeeze it, snap it open, a
   <a href="#quick-start">Quick start</a> ·
   <a href="#the-hinge-is-the-ship">Controls</a> ·
   <a href="#architecture">Architecture</a> ·
-  <a href="#deck--talk">Deck &amp; talk</a> ·
+  <a href="docs/FOLDSPACE-Deck.pdf">Pitch deck (PDF)</a> · <a href="#deck--talk">Deck &amp; talk</a> ·
   <a href="#faq">FAQ</a>
 </p>
 
@@ -695,6 +695,7 @@ Every visual is generated headlessly in Blender 5.2 and checked by a validator b
 | | |
 |---|---|
 | [`docs/FOLDSPACE-Deck.pptx`](docs/FOLDSPACE-Deck.pptx) | 10-slide deck with speaker notes and real Blender renders |
+| [`docs/FOLDSPACE-Deck.pdf`](docs/FOLDSPACE-Deck.pdf) | The same deck as a PDF (opens in the browser, no PowerPoint needed) |
 | [`docs/PRESENTATION-SCRIPT.md`](docs/PRESENTATION-SCRIPT.md) | The 3-minute script: every spoken line, every hinge beat, pre-show checklist |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Code walkthrough: recogniser, flight loop, store, scene, sponsor stack |
 | [`docs/BLENDER-VISUALS-PLAN.md`](docs/BLENDER-VISUALS-PLAN.md) · [`docs/BLENDER-CODEX-BRIEF.md`](docs/BLENDER-CODEX-BRIEF.md) · [`blender/README.md`](blender/README.md) | Visuals plan, asset brief, Blender how-to |
